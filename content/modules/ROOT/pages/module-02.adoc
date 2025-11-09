@@ -88,6 +88,7 @@ This ISO contains the OS, MicroShift, and all embedded container images — read
 
 == 2.4 What happens next
 Once installed on the target VM:
+
 * The embedded container images are already available locally.
 * Before MicroShift starts, these images are added to the running system.
 * MicroShift then starts and launches your applications without needing any external registry.
