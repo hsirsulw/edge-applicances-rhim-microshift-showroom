@@ -5,6 +5,7 @@
 Welcome to the hands-on lab for building and managing edge appliances. In this session, you will explore how RHEL Image Mode (bootc) and MicroShift simplify delivering consistent, reliable, and fully self-contained edge systems.
 
 By the end of this module, you will be able to:
+
 * Build a self-contained appliance using RHEL Image Mode (bootc).
 * Deploy cloud-native applications with MicroShift.
 * Embed application containers directly into a bootable OS image for disconnected environments.
@@ -17,11 +18,13 @@ The entire lab environment is already prepared for you. Your build host has the 
 [#edge_challenge]
 == 1.2 The Edge Challenge & The RHEL Image Mode Solution
 Edge systems often run in tough, inconsistent environments. Common challenges include:
+
 * *Configuration Drift:* Systems slowly diverge from their intended state.
 * *Risky Updates:* Traditional update methods can break systems in the field.
 * *Disconnected Locations:* Many devices have intermittent or no network connectivity.
 
-**RHEL Image Mode** addresses these challenges by treating the *entire* OS as an immutable, versioned image. Instead of updating individual packages, you deploy a new OS image exactly like updating a container.
+RHEL Image Mode addresses these challenges by treating the *entire* OS as an immutable, versioned image.  
+Instead of updating individual packages, you deploy a new OS image exactly like updating a container.
 
 [#bootc]
 == 1.3 Introducing RHEL Image Mode (bootc)
