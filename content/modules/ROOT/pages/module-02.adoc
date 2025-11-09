@@ -2,46 +2,96 @@
 
 [#containerfile]
 == 2.1 Anatomy of a bootc Appliance Containerfile
-A `Containerfile` for a `bootc` appliance defines the base OS, installed packages, and any embedded application containers. Let's review the `Containerfile` used to build our base image.
+A `Containerfile` is the recipe for your appliance. It defines:
+* The base OS (RHEL)
+* MicroShift components
+* Tools the appliance needs
 
-. Review the `Containerfile` for the base image:
+Let’s take a quick look at the file used to build our base image.
+
+. View the `Containerfile` for the base image:
 +
 [source,sh,role=execute]
 ----
 cat Containerfile.base
+
 ----
 
-This file specifies the RHEL 9 base image and installs MicroShift and other necessary packages.
+This shows how the base RHEL image is extended with MicroShift and supporting packages.
+
+[NOTE]
+You don’t need to modify this file during the lab — this is just to understand what’s inside the appliance.
 
 [#physically_bound]
-== 2.2 Creating "Physically-bound" Images
-For air-gapped or disconnected environments, application container images can be embedded directly into the bootable OS image. This creates a "physically-bound" appliance that is fully self-contained.
+== 2.2 Creating “Physically-Bound” Images
+A physically-bound image contains everything the appliance needs to run — **including the application container images**.
 
-We will now inspect the `Containerfile` for the `v1` image, which embeds WordPress and MySQL containers.
+This allows the system to:
+* Boot and run apps with **no internet connection**
+* Start MicroShift with pre-embedded containers
+* Run workloads immediately after boot
 
-. Review the `Containerfile` for the `v1` image:
+Now let’s inspect the `v1` Containerfile that embeds the application containers.
+
+. View the `Containerfile` for the v1 appliance:
 +
 [source,sh,role=execute]
 ----
 cat Containerfile.v1
 ----
 
-This `Containerfile` uses the base image we just reviewed and adds the application container images.
+This file builds on the base image and adds the embedded container images that will be used during MicroShift startup.
+
+[NOTE]
+You’ll also notice helper scripts in the repository that copy container images into the image during build time.  
+These ensure the system can run fully offline.
 
 [#build]
 == 2.3 Hands-On: Build the Base and v1 Images
-Now, you will execute the build scripts to create the bootable ISO image. These scripts use `podman` and `rhel-bootc` to build the images.
+Now you’ll run the build scripts that assemble the appliance.
 
-. Execute the script to build the base image:
+Before running them, you may want to quickly look at the scripts to understand what they do.
+
+. (Optional) View the build script for the base image:
++
+[source,sh,role=execute]
+----
+cat build-base.sh
+
+----
+
+. Build the base image:
 +
 [source,sh,role=execute]
 ----
 bash -x build-base.sh
 ----
 
-. Once the base build is complete, execute the script to build the `v1` image, which will produce the bootable ISO:
+. (Optional) View the build script for `v1`:
++
+[source,sh,role=execute]
+----
+cat build.sh
+----
+
+. Build the v1 appliance image (this produces the bootable ISO):
 +
 [source,sh,role=execute]
 ----
 bash -x build.sh v1
 ----
+
+When the build completes, the ISO will appear in the `_build/` directory.
+
+[NOTE]
+This ISO contains the OS, MicroShift, and all embedded container images — ready to run in an offline or air-gapped environment.
+
+== 2.4 What happens next
+Once installed on the target VM:
+* The embedded container images are already available locally.
+* Before MicroShift starts, these images are added to the running system.
+* MicroShift then starts and launches your applications without needing any external registry.
+
+This pattern ensures predictable, repeatable, and offline-friendly deployments.
+
+Next: xref:module-03.adoc[Module 3: Booting and Verifying the Appliance]
