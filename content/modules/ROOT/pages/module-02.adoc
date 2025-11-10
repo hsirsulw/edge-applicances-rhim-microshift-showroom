@@ -23,7 +23,7 @@ cat Containerfile.base
 [%collapsible]
 ====
 .Output of `$cat Containerfile.base`
-[source,bash]
+[source,dockerfile]
 ----
 FROM registry.redhat.io/rhel9-eus/rhel-9.6-bootc:9.6
 #FROM registry.distributed-ci.io/rhel9/rhel-bootc:9.6-1745774951
@@ -128,6 +128,8 @@ cat Containerfile.v1
 [%collapsible]
 ====
 .Output of $cat Containerfile.v1
+[source,dockerfile]
+
 ----
 FROM localhost/microshift-4.19-bootc:latest
 
