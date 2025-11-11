@@ -1,7 +1,7 @@
 * xref:index.adoc[Introduction]
 
-* xref:module-01.adoc[1. Foundation: Concepts & Setup]
-** xref:module-01.adoc#welcome[Welcome & Objectives]
+* xref:module-01.adoc[1. Foundation: Environment Setup & Image Mode Foundations]
+** xref:module-01.adoc#setup[Lab overview: Environment and components]
 ** xref:module-01.adoc#edge_challenge[The Edge Challenge]
 ** xref:module-01.adoc#bootc[Intro to bootc]
 ** xref:module-01.adoc#workflow[Workflow]

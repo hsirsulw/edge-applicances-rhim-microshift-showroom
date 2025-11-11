@@ -1,19 +1,29 @@
-= Module 1: Foundation: Concepts & Setup
+= Module 1: Foundation: Environment Setup & Image Mode Foundations
 
-[#welcome]
-== 1.1 Welcome & Lab Objectives
-Welcome to the hands-on lab for building and managing edge appliances. In this session, you will explore how RHEL Image Mode (bootc) and MicroShift simplify delivering consistent, reliable, and fully self-contained edge systems.
+[#setup]
+== 1.1 Lab overview: Environment and components
 
-By the end of this module, you will be able to:
-
-* Build a self-contained appliance using RHEL Image Mode (bootc).
-* Deploy cloud-native applications with MicroShift.
-* Embed application containers directly into a bootable OS image for disconnected environments.
-* Generate a bootable ISO from a container image and deploy it on a KVM virtual machine.
-* Perform atomic, image-based system upgrades and rollbacks.
+Similarly as on link:https://rhpds.github.io/showroom-lb1054-rhel-image-mode/modules/index.html[LB1054 - Unleashing The Power of Image Mode for RHEL] lab, you will interact with a total of 3 systems: the primary lab hypervisor, a container registry, and an image mode VM.  Most of your work will be done on the lab hypervisor, and you will create the target image mode VM as part of the exercises. Caution should be taken when instructed to reboot a system that you are on the correct host.
 
 [NOTE]
 The entire lab environment is already prepared for you. Your build host has the required tools installed, MicroShift bundles are available, and the sample application content is included in the lab repository.
+
+== Lab diagram
+
+image::lab-diagram.png[]
+
+== System purpose
+
+*Container build host*: One of the main parts of this lab is the build environment. The primary lab machine serves as a basic container build environment. The RHEL container tools (podman, buildah, skopeo) will be used throughout this lab to do simple container creation. This is all that is needed for a basic build host. You will also create the Containerfiles and any other needed configuration files on this host.
+
+*Container registry*: The registry in this lab environment is a basic registry with no authentication or management tooling. More tools, workflows, and insights are available from more modern registry solutions like quay.io. For the purposes of the exercises, a simple registry to host images is all that's needed. You will be using it for build your images and updating your target system in one of the use cases (i.e. connected, connected on-demand). 
+
+Although we do have a registry in this lab, we do also intend to simulate a disconnected deployment, where the ISO is used for installing the appliance and must be self-contained. Later in the lab, we will also attempt a disconnected update as well. 
+
+image::disconnected.jpg[disconnected-workflow,100%,100%]
+
+*Target host*: A KVM based virtual machine will be created during an exercise to serve as an install location for the image mode system. Any cloud, virtual, or bare metal machine can be used in practice. This lab won't go into detail on local management of KVM, but will use virt-install and virsh to manage the local VM.
+
 
 [#edge_challenge]
 == 1.2 The Edge Challenge & The RHEL Image Mode Solution
