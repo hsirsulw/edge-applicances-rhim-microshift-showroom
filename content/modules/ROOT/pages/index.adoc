@@ -67,11 +67,11 @@ Upon completion of this lab, you will be able to:
 == Lab modules
 
 * xref:module-01.adoc[1. Foundation: Environment Setup & Image Mode Foundations]
-** xref:module-01.adoc#setup[Environment setup]
+** xref:module-01.adoc#setup[Lab overview: Environment and components]
 ** xref:module-01.adoc#edge_challenge[The Edge Challenge]
 ** xref:module-01.adoc#bootc[Intro to bootc]
 ** xref:module-01.adoc#workflow[Workflow]
-** xref:module-01.adoc#setup[Environment Setup]
+** xref:module-01.adoc##hands-on1[Hands-On: Helper files]
 
 * xref:module-02.adoc[2. Building the Appliance (v1)]
 ** xref:module-02.adoc#containerfile[Appliance Containerfile]
