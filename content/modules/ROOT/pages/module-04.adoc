@@ -1,47 +1,135 @@
 = Module 4: Performing an Atomic Update (v2)
+:page-nav-title: Performing an Atomic Update
 
 [#atomic_updates]
 == 4.1 The Power of Atomic Updates and Rollbacks
-RHEL Image Mode provides an A/B boot model, which allows for atomic updates. When an update is applied, a new bootable image is staged. If the update fails, the system can automatically roll back to the previous known-good state, ensuring reliability.
+One of the biggest advantages of RHEL Image Mode is the **atomic update model**.  
+Each appliance keeps two bootable system states:
+
+* **A (current)** — the version currently running.
+* **B (next)** — the version that will be activated after the next reboot.
+
+When you apply an update, the system downloads a new image and stages it as the *next boot target*.  
+If something goes wrong, RHEL Image Mode can roll back instantly to the previous working state — no reinstall, no manual recovery.
+
+This approach provides:
+
+* **Reliability:** Safe upgrades, always revertible.
+* **Speed:** OS + apps update in one transaction.
+* **Consistency:** Every node runs the same known-good image.
+* **Confidence:** Upgrades don’t break your running workloads.
+
+[NOTE]
+====
+This “A/B boot” concept ensures your field-deployed appliances can be updated safely — even with power loss or network issues mid-upgrade.
+====
 
 [#build_v2]
 == 4.2 Hands-On: Build the Updated Image (v2)
-Next, you will build a new version of the appliance (`v2`). This version could contain an updated application, security patches, or OS-level changes.
+Now let’s create an updated version of our appliance: **v2**.  
+In a real-world scenario, this could include:
+* A new version of WordPress or another app,
+* OS security updates, or
+* Configuration changes.
 
-. Run the build script to create the `v2` image:
+The **`Containerfile.v2`** uses the **`v1` image as its base**, making this version faster to build and deploy.
+
+. View the `Containerfile.v2` to see how it extends v1:
++
+[source,sh,role=execute]
+----
+cat Containerfile.v2
+----
++
+Example content:
++
+[%collapsible]
+[source,dockerfile]
+----
+FROM localhost/microshift-4.19-bootc-embeeded:v1
+ARG USHIFT_VER=4.19
+
+RUN dnf config-manager \
+        --set-enabled rhocp-${USHIFT_VER}-for-rhel-9-$(uname -m)-rpms \
+        --set-enabled fast-datapath-for-rhel-9-$(uname -m)-rpms 
+
+RUN dnf update --enablerepo=rhel-9-for-$(uname -m)-baseos-eus-rpms \
+               --enablerepo=rhel-9-for-x86_64-appstream-eus-rpms \
+               -y --releasever=9.6 && \
+    dnf clean all
+----
+
+. Build the new `v2` image using the provided script:
 +
 [source,sh,role=execute]
 ----
 bash -x build.sh v2
 ----
 
+Once the build completes, the resulting image and ISO will be available in the `_build/` folder.
+
+[NOTE]
+====
+Each new version is simply another container image — giving you Git-like versioning for your operating system.
+====
+
 [#upgrade]
 == 4.3 Hands-On: Upgrade the Live System
-With the `v2` image built, you can now perform an atomic upgrade on the running VM.
+Now that your updated image is ready, let’s **upgrade the running appliance** safely using atomic image switching.
 
-. Execute the `bootc switch` command to stage the `v2` image:
+. Stage the v2 image on your running appliance:
 +
 [source,sh,role=execute]
 ----
 sudo bootc switch <registry_path>/<image_name>:v2
 ----
 
-. Apply the update and reboot the system:
+. Apply and reboot to activate the update:
 +
 [source,sh,role=execute]
 ----
 sudo bootc upgrade --apply
+sudo reboot
 ----
 
-After the reboot, the system will be running the `v2` image. You can verify the update using `sudo bootc status`.
+. After reboot, verify the system’s image version:
++
+[source,sh,role=execute]
+----
+sudo bootc status
+----
 
-. Verify the greenboot status and logs to ensure the update was successful:
+You should see the **v2 image** as the active deployment and **v1** available as a rollback target.
+
+. Check system health using Greenboot (the service that validates system readiness after each boot):
 +
 [source,sh,role=execute]
 ----
 systemctl status greenboot-healthcheck.service
 ----
 
+[NOTE]
+====
+If Greenboot detects a failure (for example, MicroShift doesn’t start correctly), it will automatically roll back to the previous working version.  
+That’s what makes RHEL Image Mode “atomic and safe by design”.
+====
+
 [#delta_updates]
 == 4.4 Experimental: Delta Updates
-For low-bandwidth environments, transferring full OS images can be challenging. While not officially supported, it is possible to generate smaller delta updates using tools like `tar-diff`. This approach is of interest to strategic partners and demonstrates the flexibility of the image-based model.
+In low-bandwidth environments, downloading an entire image for every update may not be practical.  
+**Delta updates** solve this by transferring only the difference between versions (v1 → v2).
+
+While this is still **experimental**, Red Hat and the container community are exploring it.  
+You can experiment using the open-source link:https://github.com/containers/tar-diff[tar-diff] utility.
+
+With tools like *tar-diff*, you can generate compact binary patches between image layers, reducing update sizes drastically — ideal for edge devices with limited connectivity.
+
+
+[#summary]
+== 4.5 Summary
+You’ve just experienced the key differentiator of Image Mode:
+* One-command upgrades with instant rollback.  
+* Predictable, tested states across your entire fleet.  
+* Optional support for smaller delta-based updates.  
+
+Next: xref:module-05.adoc[Module 5: Troubleshooting & Advanced Topics]
