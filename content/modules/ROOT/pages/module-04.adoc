@@ -1,4 +1,4 @@
-= Module 4: Performing an Atomic Update (v2)
+= Module 4: Performing an Atomic Update 
 :page-nav-title: Performing an Atomic Update
 
 [#atomic_updates]
@@ -25,7 +25,7 @@ This “A/B boot” concept ensures your field-deployed appliances can be update
 ====
 
 [#build_v2]
-== 4.2 Hands-On: Build the Updated Image (v2)
+== 4.2 Hands-On: Build the Updated Image 
 Now let’s create an updated version of our appliance: **v2**.  
 In a real-world scenario, this could include:
 * A new version of WordPress or another app,
