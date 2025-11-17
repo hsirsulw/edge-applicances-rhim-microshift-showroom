@@ -291,7 +291,7 @@ Once the VM begins booting, open a new terminal connect to the console to watch 
 
 [source,sh,role=execute]
 ----
-virsh console microshift-4.19-bootc-vm1
+sudo virsh console microshift-4.19-bootc-vm1
 ----
 
 You should now see the appliance boot into Image Mode.
@@ -412,9 +412,21 @@ oc get pods -A
 sudo crictl images
 ----
 
+. Verify that Kubernetes events show images were already present (not pulled from network):
++
+[source,sh,role=execute]
+----
+oc get events -A | grep -i pull
+----
++
+You should see events indicating that container images were "already present on machine" for:
+
+* WordPress and MySQL application images
+* MicroShift component images (from the openshift-release-dev registry)
+
 [NOTE]
 ====
-This confirms your appliance is fully **air-gapped** and relying on the embedded images you packaged inside the ISO.
+This confirms your appliance is fully **air-gapped** and relying on the embedded images you packaged inside the ISO. The Kubernetes events show "already present on machine" rather than "Successfully pulled", which indicates the images were loaded from the embedded storage during MicroShift startup, not pulled from external registries.
 ====
 
 === Validation checkpoint: Appliance verification complete
@@ -448,6 +460,15 @@ oc get pods -A -o wide
 sudo crictl images | grep -E "wordpress|mysql"
 ----
 
+. Verify Kubernetes events confirm images were already present:
++
+[source,sh,role=execute]
+----
+oc get events -A | grep -i pull
+----
++
+Look for events showing "already present on machine" for application and MicroShift component images.
+
 [IMPORTANT]
 ====
 **Expected results:**
@@ -456,7 +477,7 @@ sudo crictl images | grep -E "wordpress|mysql"
 * Node should be in "Ready" state
 * WordPress and MySQL pods should be running in the `wordpress` namespace
 * Container images (`wordpress:6.2.1-apache` and `mysql:8.0`) should be present in `crictl images` output
-* All images should have been loaded from the embedded storage, not pulled from external registries
+* Kubernetes events should show "already present on machine" for all images, confirming they were loaded from embedded storage, not pulled from external registries
 
 If any pods are not running, check logs with `oc logs <pod-name> -n wordpress` or review MicroShift logs with `sudo journalctl -u microshift`.
 ====
