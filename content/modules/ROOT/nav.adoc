@@ -19,8 +19,10 @@
 * xref:module-04.adoc[4. Performing an Atomic Update (v2)]
 ** xref:module-04.adoc#atomic_updates[Atomic Updates]
 ** xref:module-04.adoc#build_v2[Build v2]
-** xref:module-04.adoc#upgrade[Upgrade System]
+** xref:module-04.adoc#upgrade[Upgrade System (Disconnected)]
+** xref:module-04.adoc#rollback[Exploring Rollbacks]
 ** xref:module-04.adoc#delta_updates[Delta Updates]
+** xref:module-04.adoc#summary[Summary]
 
 * xref:module-05.adoc[5. Conclusion]
 ** xref:module-05.adoc#recap[Recap]
