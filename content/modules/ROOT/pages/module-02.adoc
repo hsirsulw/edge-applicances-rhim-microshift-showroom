@@ -362,7 +362,7 @@ sudo podman images | grep microshift-4.19-bootc-embeeded
 +
 [source,sh,role=execute]
 ----
-ls -lh /var/tmp/bootc-images/*.iso
+ls -lh /var/tmp/bootc-images/bootiso/*.iso
 ----
 
 [IMPORTANT]
@@ -371,7 +371,7 @@ ls -lh /var/tmp/bootc-images/*.iso
 
 * Base image `localhost/microshift-4.19-bootc:latest` should be present
 * Appliance image `localhost/microshift-4.19-bootc-embeeded:v1` should be present
-* ISO file `microshift-4.19-bootc-embeeded-v1.iso` should exist in `/var/tmp/bootc-images/` (or `_build/` directory)
+* ISO file `microshift-4.19-bootc-embeeded-v1.iso` should exist in `/var/tmp/bootc-images/bootiso/` (or `_build/` directory)
 * ISO file size should be several GB (contains embedded container images)
 
 If any of these are missing, review the build logs (`build-base.log` and `build-v1.log`) for errors.
