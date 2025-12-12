@@ -66,18 +66,28 @@ RUN dnf install -y --releasever="${VERSION_ID}" firewalld jq microshift microshi
     dnf clean all
 
 # Create a default 'redhat' user with the specified password.
+# Add it to the 'wheel' group to allow for running sudo commands.
 ARG USER_PASSWD
+RUN if [ -z "${USER_PASSWD}" ] ; then \
+        echo USER_PASSWD is a mandatory build argument && exit 1 ; \
+    fi
+
 RUN useradd -m -d /var/home/redhat -G wheel redhat && \
     echo "redhat:${USER_PASSWD}" | chpasswd
 
-# Mandatory firewall configuration (example)
+# Mandatory firewall configuration
 RUN firewall-offline-cmd --zone=public --add-port=22/tcp && \
-    firewall-offline-cmd --zone=public --add-port=80/tcp && \
+    firewall-offline-cmd --zone=trusted --add-source=10.42.0.0/16 && \
+    firewall-offline-cmd --zone=trusted --add-source=169.254.169.1 && \
+    firewall-offline-cmd --zone=trusted --add-source=fd01::/48
+    # Application-specific firewall configuration
+RUN firewall-offline-cmd --zone=public --add-port=80/tcp && \
     firewall-offline-cmd --zone=public --add-port=443/tcp && \
     firewall-offline-cmd --zone=public --add-port=30000-32767/tcp && \
     firewall-offline-cmd --zone=public --add-port=30000-32767/udp
 
-# systemd unit example
+# Create a systemd unit to recursively make the root filesystem subtree
+# shared as required by OVN images
 RUN cat > /etc/systemd/system/microshift-make-rshared.service <<'EOF'
 [Unit]
 Description=Make root filesystem shared
@@ -93,15 +103,10 @@ EOF
 RUN systemctl enable microshift-make-rshared.service
 
 COPY wordpress /usr/lib/microshift/manifests.d/wordpress
-
-# CIS hardening example
-RUN cat > /etc/sysctl.d/99-cis-hardening.conf <<'EOF'
-# IPv6 and IPv4 hardening values...
-EOF
 ----
 ====
 
-This Containerfile extends the RHEL EUS bootc base image, installs MicroShift, configures firewall rules, applies CIS hardening, and places manifests for MicroShift.
+This Containerfile extends the RHEL EUS bootc base image, installs MicroShift, configures firewall rules, and places manifests for MicroShift.
 
 [NOTE]
 ====
@@ -174,19 +179,19 @@ This repo includes two helper scripts you’ll see and can inspect:
 Upstream example / reference for patterns:
 link:https://gitlab.com/fedora/bootc/examples/-/tree/main/physically-bound-images[physically-bound-images examples].
 
-. View the `Containerfile` for the v1 appliance (embedding step):
+. View the `Containerfile` for the 4.19 appliance (embedding step):
 +
 [source,sh,role=execute]
 ----
-cat Containerfile.v1
+cat Containerfile.4.19
 ----
 +
 [%collapsible]
 ====
-.Output of `$cat Containerfile.v1`
+.Output of `$cat Containerfile.4.19`
 [source,dockerfile]
 ----
-FROM localhost/microshift-4.19-bootc:latest
+FROM localhost/microshift-bootc:base
 
 ARG USHIFT_BASE_IMAGE_NAME
 ARG USHIFT_BASE_IMAGE_TAG
@@ -194,25 +199,32 @@ ARG USHIFT_BASE_IMAGE_TAG
 ENV IMAGE_STORAGE_DIR=/usr/lib/containers/storage
 ENV IMAGE_LIST_FILE=${IMAGE_STORAGE_DIR}/image-list.txt
 
-# helper scripts (bundled into image)
+# use to embed application images
 COPY ./embed_image.sh /usr/bin/
 COPY ./copy_embedded_images.sh /usr/bin/
 
-# Embed MicroShift payload images (example)
+ENV IMAGE_STORAGE_DIR=/usr/lib/containers/storage
+ENV IMAGE_LIST_FILE=${IMAGE_STORAGE_DIR}/image-list.txt
+
+# Pull the container images into /usr/lib/containers/storage:
+# - Each image goes into a separate sub-directory
+# - Sub-directories are named after the image reference string SHA
+# - An image list file maps image references to their name SHA
+# First for MicroShift payload
 RUN --mount=type=secret,id=pullsecret,dst=/run/secrets/pull-secret.json \
     images="$(jq -r ".images[]" /usr/share/microshift/release/release-"$(uname -m)".json)" ; \
     mkdir -p "${IMAGE_STORAGE_DIR}" ; \
     for img in ${images} ; do \
        /usr/bin/embed_image.sh ${img} --authfile /run/secrets/pull-secret.json ; \
      done 
-
-# Embed application images
+# Then for Applications
 RUN --mount=type=secret,id=pullsecret,dst=/run/secrets/pull-secret.json <<PULL
     /usr/bin/embed_image.sh docker.io/library/wordpress:6.2.1-apache
     /usr/bin/embed_image.sh docker.io/library/mysql:8.0
 PULL
 
-# At runtime, a systemd drop-in triggers copy_embedded_images.sh
+# 
+
 RUN mkdir -p /etc/systemd/system/microshift.service.d
 RUN cat > /etc/systemd/system/microshift.service.d/microshift-copy-images.conf <<EOF
 [Service]
@@ -222,7 +234,7 @@ EOF
 ====
 
 [#build]
-== 2.3 Hands-On: Build the Base and v1 Images
+== 2.3 Hands-On: Build the Base and 4.19 Images
 Now you’ll run the build scripts that assemble the appliance. We suggest you **inspect** (cat) each script first, then run the build so you understand what it does.
 
 . (Optional) View the build script for the base image:
@@ -239,15 +251,19 @@ cat build-base.sh
 ----
 #!/bin/bash
 USER_PASSWD=redhat02
-IMAGE_NAME=microshift-4.19-bootc
+IMAGE_NAME=microshift-bootc:base
 
 dnf config-manager \
         --set-enabled rhocp-4.19-for-rhel-9-$(uname -m)-rpms \
         --set-enabled fast-datapath-for-rhel-9-$(uname -m)-rpms
-cp /etc/yum.repos.d/redhat.repo ./redhat.repo
-cp /etc/containers/policy.json ./policy.json
-
-# Run podman build (note: lab uses local registry / disconnected caches)
+dnf config-manager --set-disabled rhocp-4.18-for-rhel-9-$(uname -m)-rpms --set-disabled rhocp-4.20-for-rhel-9-$(uname -m)-rpms
+cp /etc/yum.repos.d/redhat.repo /home/lab-user/bootc-embeeded-containers
+cp /etc/containers/policy.json /home/lab-user/bootc-embeeded-containers
+# Run podman build as root to allow for :z relabeling
+#
+# Mount the host subscription data
+#
+# In this lab there is no need for --authfile / pullsecret as we are pulling from a disconnected unsecure registry
 sudo podman build -t ${IMAGE_NAME} \
     --build-arg USER_PASSWD=${USER_PASSWD} \
     --volume /etc/rhsm:/etc/rhsm:ro,z \
@@ -264,7 +280,7 @@ sudo podman build -t ${IMAGE_NAME} \
 time sudo bash -x build-base.sh 2>&1 | tee build-base.log
 ----
 
-. (Optional) View the v1 build script:
+. (Optional) View the build script:
 +
 [source,sh,role=execute]
 ----
@@ -288,41 +304,73 @@ if [ -z "$TAG" ]; then
     exit 1
 fi
 
+# Set IMAGE_NAME and BASE_IMAGE_NAME based on TAG (case-insensitive)
 TAG_LOWER=$(echo "$TAG" | tr '[:upper:]' '[:lower:]')
 case "$TAG_LOWER" in
-    v1)
-        IMAGE_NAME=microshift-4.19-bootc-embeeded
-        BASE_IMAGE_NAME=microshift-4.19-bootc:${TAG}
+    4.19)
+        IMAGE_NAME=microshift-bootc-embeeded
+        BASE_IMAGE_NAME=microshift-bootc:base
         ;;
-    v2)
-        IMAGE_NAME=microshift-4.20-bootc-embeeded
-        BASE_IMAGE_NAME=microshift-4.20-bootc:${TAG}
+    4.20)
+        IMAGE_NAME=microshift-bootc-embeeded
+        BASE_IMAGE_NAME=microshift-bootc:4.19
+        ;;
+    *)
+        echo "Error: TAG must be either 4.19 or 4.20"
+        exit 1
         ;;
 esac
 
-echo "#### Building a new bootc image with MicroShift and embedded application images"
+#REGISTRY_IMG="rhn_support_arolivei/${IMAGE_NAME}"
+
+# For 4.20, configure dnf repositories
+if [ "$TAG_LOWER" = "4.20" ]; then
+    echo "#### Configuring dnf repositories for 4.20"
+    sudo dnf config-manager \
+        --set-enabled rhocp-4.20-for-rhel-9-$(uname -m)-rpms \
+        --set-enabled fast-datapath-for-rhel-9-$(uname -m)-rpms
+    sudo dnf config-manager \
+        --set-disabled rhocp-4.18-for-rhel-9-$(uname -m)-rpms \
+        --set-disabled rhocp-4.19-for-rhel-9-$(uname -m)-rpms
+    cp /etc/yum.repos.d/redhat.repo /home/lab-user/bootc-embeeded-containers
+fi
+
+echo "#### Building a new bootc image with MicroShift and application Container images embeeded to it"
 sudo podman build -t "${IMAGE_NAME}:${TAG}" \
     --volume /etc/rhsm:/etc/rhsm:ro,z \
     --volume /etc/pki/entitlement:/etc/pki/entitlement:ro,z \
     --volume /etc/yum.repos.d:/etc/yum.repos.d:ro,z \
+    --volume /etc/containers/registries.conf.d/99-mirrors.conf:/etc/containers/registries.conf.d/99-mirrors.conf:ro,z \
+    --volume /etc/containers/policy.json:/etc/containers/policy.json:ro,z \
     --build-arg USHIFT_BASE_IMAGE_NAME="${BASE_IMAGE_NAME}" \
+    --build-arg USHIFT_BASE_IMAGE_TAG=${TAG} \
     -f Containerfile.${TAG}
 
-sudo mkdir -p /var/tmp/bootc-images
-echo "#### creating ISO from bootc image"
-sudo podman run --rm -it --privileged --security-opt label=type:unconfined_t \
-   -v /var/lib/containers/storage:/var/lib/containers/storage \
-   -v /var/tmp/bootc-images:/output \
-    registry.redhat.io/rhel9/bootc-image-builder:latest \
-    --progress=verbose --local --type iso localhost/${IMAGE_NAME}:${TAG}
+#echo "#### pushing bootc image to a registry"
+#podman push "localhost/${IMAGE_NAME}:${TAG}" "${REGISTRY_URL}/${REGISTRY_IMG}:${TAG}"
+
+# Only create ISO for 4.19
+if [ "$TAG_LOWER" = "4.19" ]; then
+    sudo mkdir -p /var/tmp/bootc-images
+    echo "#### creating ISO from bootc image"
+    sudo podman run --rm -it --privileged --security-opt label=type:unconfined_t \
+       -v /var/lib/containers/storage:/var/lib/containers/storage \
+       -v /var/tmp/bootc-images:/output \
+       --volume /etc/rhsm:/etc/rhsm:ro \
+       --volume /etc/pki/entitlement:/etc/pki/entitlement:ro \
+        registry.redhat.io/rhel9/bootc-image-builder:latest \
+        --progress=verbose --local --type iso localhost/${IMAGE_NAME}:${TAG}
+
+    cp -v /var/tmp/bootc-images/bootiso/install.iso microshift-bootc-embeeded-4.19.iso
+fi
 ----
 ====
 
-. Build the v1 appliance image (~10–15 minutes):
+. Build the 4.19 appliance image (~10–15 minutes):
 +
 [source,sh,role=execute]
 ----
-time sudo bash -x build.sh v1 2>&1 | tee build-v1.log
+time sudo bash -x build.sh 4.19 2>&1 | tee build-4.19.log
 ----
 
 When the build completes, the ISO will appear under `_build/` or `/var/tmp/bootc-images/`.
@@ -334,14 +382,14 @@ Before proceeding, verify that both images were built successfully:
 +
 [source,sh,role=execute]
 ----
-sudo podman images | grep microshift-4.19-bootc
+sudo podman images | grep microshift-bootc:base
 ----
 
-. Verify the v1 appliance image exists:
+. Verify the 4.19 appliance image exists:
 +
 [source,sh,role=execute]
 ----
-sudo podman images | grep microshift-4.19-bootc-embeeded
+sudo podman images | grep microshift-bootc-embeeded:4.19
 ----
 
 . Confirm the ISO file was created:
@@ -355,9 +403,9 @@ ls -lh /var/tmp/bootc-images/bootiso/*.iso || ls -lh _build/*.iso
 ====
 **Expected results:**
 
-* Base image `localhost/microshift-4.19-bootc:latest` should be present
-* Appliance image `localhost/microshift-4.19-bootc-embeeded:v1` should be present
-* ISO file `microshift-4.19-bootc-embeeded-v1.iso` should exist in `/var/tmp/bootc-images/bootiso/` or `_build/`
+* Base image `localhost/microshift-bootc:base` should be present
+* Appliance image `localhost/microshift-bootc-embeeded:4.19` should be present
+* ISO file `microshift-bootc-embeeded-4.19.iso` should exist in `/var/tmp/bootc-images/bootiso/` or `_build/`
 * ISO file size will likely be several GB (it contains embedded container images)
 ====
 

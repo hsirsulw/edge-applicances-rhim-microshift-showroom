@@ -5,9 +5,9 @@
 ** xref:module-01.adoc#edge_challenge[The Edge Challenge]
 ** xref:module-01.adoc#bootc[Intro to bootc]
 ** xref:module-01.adoc#workflow[Workflow]
-** xref:module-01.adoc##hands-on1[Hands-On: Helper files]
+** xref:module-01.adoc#hands-on1[Hands-On: Helper files]
 
-* xref:module-02.adoc[2. Building the Appliance (v1)]
+* xref:module-02.adoc[2. Building the Appliance (v4.19)]
 ** xref:module-02.adoc#containerfile[Appliance Containerfile]
 ** xref:module-02.adoc#physically_bound[Physically-bound Images]
 ** xref:module-02.adoc#build[Build Images]
@@ -16,9 +16,9 @@
 ** xref:module-03.adoc#boot_vm[Boot VM]
 ** xref:module-03.adoc#manifests[Application Manifests]
 
-* xref:module-04.adoc[4. Performing an Atomic Update (v2)]
+* xref:module-04.adoc[4. Performing an Atomic Update (v4.20)]
 ** xref:module-04.adoc#atomic_updates[Atomic Updates]
-** xref:module-04.adoc#build_v2[Build v2]
+** xref:module-04.adoc#build_v4.20[Build v4.20]
 ** xref:module-04.adoc#upgrade[Upgrade System (Disconnected)]
 ** xref:module-04.adoc#rollback[Exploring Rollbacks]
 ** xref:module-04.adoc#delta_updates[Delta Updates]

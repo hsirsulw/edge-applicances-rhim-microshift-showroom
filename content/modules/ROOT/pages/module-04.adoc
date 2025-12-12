@@ -5,7 +5,7 @@
 By the end of this module, you will be able to:
 
 * Explain the A/B boot model and atomic update process
-* Build an updated appliance image (v2)
+* Build an updated appliance image (4.20)
 * Perform an atomic system upgrade on a running appliance using disconnected deployment
 * Export and transfer container images for offline deployment
 * Verify system health using greenboot
@@ -35,44 +35,66 @@ This approach provides:
 This “A/B boot” concept ensures your field-deployed appliances can be updated safely — even with power loss or network issues mid-upgrade.
 ====
 
-[#build_v2]
+[#build_4.20]
 == 4.2 Hands-On: Build the Updated Image 
-Now let’s create an updated version of our appliance: **v2**.  
+Now let's create an updated version of our appliance: **4.20**.  
 In a real-world scenario, this could include:
 
 * A new version of WordPress or another app,
 * OS security updates, or
 * Configuration changes.
 
-The **`Containerfile.v2`** uses the **`v1` image as its base**, making this version faster to build and deploy.
+The **`Containerfile.4.20`** uses the **`4.19` image as its base**, making this version faster to build and deploy.
 
-. View the `Containerfile.v2` to see how it extends v1:
+. View the `Containerfile.4.20` to see how it extends 4.19:
 +
 [source,sh,role=execute]
 ----
-cat Containerfile.v2
+cat Containerfile.4.20
 ----
 +
-Example content:
+[%collapsible]
+====
+.Output of `$cat Containerfile.4.20`
+[source,dockerfile]
 +
 [%collapsible]
 [source,dockerfile]
 ----
-FROM localhost/microshift-4.19-bootc-embeeded:v1
-
+FROM localhost/microshift-bootc-embeeded:4.19
+COPY ./embed_image.sh /usr/bin/
 ## Needed as bootc-image-builder requires a repo file to be present in the base image.
-# in the build.sh with TAG=v2, we replace the 4.19 repo with the 4.20 repo to allow upgrade MicroShift to 4.20. 
+# in the build.sh with TAG=4.20, we replace the 4.19 repo with the 4.20 repo to allow upgrade MicroShift to 4.20. 
 ADD redhat.repo /etc/yum.repos.d/redhat.repo
 RUN dnf update --enablerepo=rhel-9-for-$(uname -m)-baseos-eus-rpms --enablerepo=rhel-9-for-x86_64-appstream-eus-rpms -y --releasever=9.6 && \
     dnf clean all
+RUN > /usr/lib/containers/storage/image-list.txt
+# Pull the container images into /usr/lib/containers/storage:
+# - Each image goes into a separate sub-directory
+# - Sub-directories are named after the image reference string SHA
+# - An image list file maps image references to their name SHA
+# First for MicroShift payload
+RUN --mount=type=secret,id=pullsecret,dst=/run/secrets/pull-secret.json \
+    images="$(jq -r ".images[]" /usr/share/microshift/release/release-"$(uname -m)".json)" ; \
+    mkdir -p "${IMAGE_STORAGE_DIR}" ; \
+    for img in ${images} ; do \
+       /usr/bin/embed_image.sh ${img} --authfile /run/secrets/pull-secret.json ; \
+     done 
+RUN cat /usr/share/microshift/release/release-"$(uname -m)".json|jq .
+# Then for Applications
+RUN --mount=type=secret,id=pullsecret,dst=/run/secrets/pull-secret.json <<PULL
+    /usr/bin/embed_image.sh docker.io/library/wordpress:6.2.1-apache
+    /usr/bin/embed_image.sh docker.io/library/mysql:8.0
+PULL
 
 ----
+====
 
-. Build the new `v2` image using the provided script (~ 2 minutes):
+. Build the new `4.20` image using the provided script (~ 2 minutes):
 +
 [source,sh,role=execute]
 ----
-time sudo bash -x build.sh v2 2>&1 | tee build-v2.log
+time sudo bash -x build.sh 4.20 2>&1 | tee build-4.20.log
 ----
 
 Once the build completes, the resulting image and ISO will be available in the `/var/tmp/bootc-images/bootiso/` folder.
@@ -84,28 +106,28 @@ Each new version is simply another container image — giving you Git-like versi
 
 [NOTE]
 ====
-**Image Size Consideration:** Building v2 on top of v1 creates a layered image that includes all previous layers, which increases image size (you can verify this with `podman images`—v2 is 7.59 GB vs. v1's 5.37 GB). In production, you can choose to build fresh images for each version instead of layering. For example, you could build v2 directly from the RHEL base or MicroShift base, rather than from v1. The `bootc switch` command works with both layered and fresh images—it simply changes the container image reference and preserves your system state (`/etc` and `/var`). Building fresh images can help manage image sizes, especially when you need to optimize for storage or bandwidth constraints.
+**Image Size Consideration:** Building 4.20 on top of 4.19 creates a layered image that includes all previous layers, which increases image size (you can verify this with `podman images`—4.20 is 7.59 GB vs. 4.19's 5.37 GB). In production, you can choose to build fresh images for each version instead of layering. For example, you could build 4.20 directly from the RHEL base or MicroShift base, rather than from 4.19. The `bootc switch` command works with both layered and fresh images—it simply changes the container image reference and preserves your system state (`/etc` and `/var`). Building fresh images can help manage image sizes, especially when you need to optimize for storage or bandwidth constraints.
 ====
 
 [#upgrade]
 == 4.3 Hands-On: Upgrade the Live System (Disconnected Workflow)
 Now that your updated image is ready, let's **upgrade the running appliance** safely using atomic image switching. This workflow demonstrates a **disconnected deployment** where the image is transferred directly to the target node without requiring a container registry.
 
-=== Export the v2 image to a directory
-First, we'll export the v2 image from the local container storage to a directory format that can be transferred to the target node.
+=== Export the 4.20 image to a directory
+First, we'll export the 4.20 image from the local container storage to a directory format that can be transferred to the target node.
 
 . Create a directory for the exported image:
 +
 [source,sh,role=execute]
 ----
-mkdir -p /var/tmp/microshift-4.20-bootc-v2
+mkdir -p /var/tmp/microshift-bootc-4.20
 ----
 
-. Export the v2 image to the directory using `skopeo`:
+. Export the 4.20 image to the directory using `skopeo`:
 +
 [source,sh,role=execute]
 ----
-sudo skopeo copy containers-storage:localhost/microshift-4.20-bootc-embeeded:v2 dir:/var/tmp/microshift-4.20-bootc-v2
+sudo skopeo copy containers-storage:localhost/microshift-bootc-embeeded:4.20 dir:/var/tmp/microshift-bootc-4.20
 ----
 +
 This creates an OCI-compliant directory structure containing all image layers and metadata.
@@ -114,7 +136,7 @@ This creates an OCI-compliant directory structure containing all image layers an
 +
 [source,sh,role=execute]
 ----
-du -sh /var/tmp/microshift-4.20-bootc-v2
+du -sh /var/tmp/microshift-bootc-4.20
 ----
 +
 The directory should be approximately 7-8 GB (matching the image size you saw with `podman images`).
@@ -126,7 +148,7 @@ Now we'll transfer the image directory to the target appliance. In this lab, we 
 +
 [source,sh,role=execute]
 ----
-scp -r /var/tmp/microshift-4.20-bootc-v2/ redhat@<VM_IP_ADDRESS>:/var/tmp
+scp -r /var/tmp/microshift-bootc-4.20/ redhat@<VM_IP_ADDRESS>:/var/tmp
 ----
 +
 [NOTE]
@@ -155,13 +177,13 @@ microshift version
 oc get pods -A
 ----
 +
-You should see the v1 image is currently active and MicroShift 4.19 is running.
+You should see the 4.19 image is currently active and MicroShift 4.19 is running.
 
-. Stage the v2 image using directory transport:
+. Stage the 4.20 image using directory transport:
 +
 [source,sh,role=execute]
 ----
-sudo bootc switch --transport dir /var/tmp/microshift-4.20-bootc-v2/
+sudo bootc switch --transport dir /var/tmp/microshift-bootc-4.20/
 ----
 +
 [NOTE]
@@ -177,7 +199,7 @@ sudo bootc status
 sudo rpm-ostree status
 ----
 +
-You should see the v2 image listed as "Staged image" or "Queued for next boot", while the current v1 image remains as the "Booted image".
+You should see the 4.20 image listed as "Staged image" or "Queued for next boot", while the current 4.19 image remains as the "Booted image".
 
 [NOTE]
 ====
@@ -215,7 +237,7 @@ sudo bootc status
 sudo rpm-ostree status
 ----
 
-You should see the **v2 image** (dir:/var/tmp/microshift-4.20-bootc-v2/) as the active deployment and **v1** available as a rollback target.
+You should see the **4.20 image** (dir:/var/tmp/microshift-bootc-4.20/) as the active deployment and **4.19** available as a rollback target.
 
 . Verify MicroShift has been upgraded:
 +
@@ -254,14 +276,14 @@ That's what makes RHEL Image Mode "atomic and safe by design". For more informat
 === Validation checkpoint: Upgrade verification
 After the system reboots, verify the upgrade was successful:
 
-. Confirm v2 is now the active deployment:
+. Confirm 4.20 is now the active deployment:
 +
 [source,sh,role=execute]
 ----
 sudo bootc status
 ----
 +
-The active deployment should show `dir:/var/tmp/microshift-4.20-bootc-v2/` as the booted image.
+The active deployment should show `dir:/var/tmp/microshift-bootc-4.20/` as the booted image.
 
 . Verify MicroShift version was upgraded:
 +
@@ -298,12 +320,12 @@ sudo bootc status | grep -A 5 "rollback"
 ====
 **Expected results:**
 
-* `bootc status` should show v2 (dir:/var/tmp/microshift-4.20-bootc-v2/) as the active deployment
+* `bootc status` should show 4.20 (dir:/var/tmp/microshift-bootc-4.20/) as the active deployment
 * `microshift version` should show 4.20.0
 * `greenboot status` should show "GREEN" indicating health checks passed
 * MicroShift node should be in "Ready" state
 * Application pods should still be running
-* Previous v1 image should be available as a rollback target
+* Previous 4.19 image should be available as a rollback target
 
 If greenboot shows "RED" or MicroShift is not running, the system should automatically roll back. You can manually roll back using `sudo bootc rollback` if needed.
 ====
@@ -324,8 +346,8 @@ sudo bootc status
 +
 You should see:
 
-* **Booted image**: The currently running version (v2 in this case)
-* **Rollback image**: The previous version available for rollback (v1 in this case)
+* **Booted image**: The currently running version (4.20 in this case)
+* **Rollback image**: The previous version available for rollback (4.19 in this case)
 
 [NOTE]
 ====
@@ -374,8 +396,8 @@ sudo bootc status
 +
 You should see:
 
-* **Booted image**: Now shows the previous version (v1: `oci:/run/install/repo/container`)
-* **Rollback image**: Now shows v2 (the version we just rolled back from)
+* **Booted image**: Now shows the previous version (4.19: `oci:/run/install/repo/container`)
+* **Rollback image**: Now shows 4.20 (the version we just rolled back from)
 
 . Verify MicroShift has rolled back to the previous version:
 +
@@ -411,7 +433,7 @@ This demonstrates the reliability and safety of RHEL Image Mode's atomic update 
 [#delta_updates]
 == 4.5 Experimental: Delta Updates
 In low-bandwidth environments, downloading an entire image for every update may not be practical.  
-**Delta updates** solve this by transferring only the difference between versions (v1 → v2).
+**Delta updates** solve this by transferring only the difference between versions (4.19 → 4.20).
 
 While this is still **experimental**, Red Hat and the container community are exploring it.  
 You can experiment using the open-source link:https://github.com/containers/tar-diff[tar-diff] utility.

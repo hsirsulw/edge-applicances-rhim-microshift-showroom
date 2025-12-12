@@ -175,7 +175,7 @@ cat create-vm.sh
 ----
 VMNAME=microshift-4.19-bootc-vm1
 NETNAME=bootc-isolated
-ISO_FILE="microshift-4.19-bootc-embeeded-v1.iso"
+ISO_FILE="microshift-bootc-embeeded-4.19.iso"
 LIBVIRT_IMAGES_DIR="/var/lib/libvirt/images"
 KS_FILE="kickstart.ks"
 
@@ -352,7 +352,7 @@ The default user is `redhat` with password `redhat02`. You should see a message 
 ====
 
 === Check bootc system status
-. Confirm the system is running the v1 deployment:
+. Confirm the system is running the 4.19 deployment:
 +
 [source,sh,role=execute]
 ----
@@ -432,7 +432,7 @@ This confirms your appliance is fully **air-gapped** and relying on the embedded
 === Validation checkpoint: Appliance verification complete
 Verify all components are functioning correctly:
 
-. Confirm bootc status shows v1:
+. Confirm bootc status shows 4.19:
 +
 [source,sh,role=execute]
 ----
@@ -473,7 +473,7 @@ Look for events showing "already present on machine" for application and MicroSh
 ====
 **Expected results:**
 
-* `bootc status` should show the v1 image as active
+* `bootc status` should show the 4.19 image as active
 * Node should be in "Ready" state
 * WordPress and MySQL pods should be running in the `wordpress` namespace
 * Container images (`wordpress:6.2.1-apache` and `mysql:8.0`) should be present in `crictl images` output
@@ -562,4 +562,4 @@ cat /etc/os-release
 
 ---
 
-Next: xref:module-04.adoc[Module 4: Performing an Atomic Update (v1 → v2)]
+Next: xref:module-04.adoc[Module 4: Performing an Atomic Update (4.19 → 4.20)]
