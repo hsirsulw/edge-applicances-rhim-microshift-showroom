@@ -430,6 +430,15 @@ This demonstrates the reliability and safety of RHEL Image Mode's atomic update 
 [#delta_updates]
 == 4.5 Experimental: Delta Updates
 
+=== Optimizing Images for Efficient Transfers
+
+Before discussing when to use delta updates, it's worth noting that you can optimize bootc images for better transfer efficiency using `bootc-base-imagectl rechunk`. This tool splits images into content-addressed layers, enabling better layer reuse in registry-based transfers. For more information on optimizing container images, see link:https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/10/html/using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems/generating-a-custom-minimal-base-image#optimizing-container-images-to-a-smaller-version[Optimizing container images to a smaller version].
+
+[NOTE]
+====
+**Image Optimization vs. Delta Updates:** Image rechunking optimizes the structure of a single image for better registry-based layer reuse. Delta updates create compact files representing differences between versions for offline transfer. Both techniques help reduce transfer sizes, but serve different scenarios.
+====
+
 === Why File-Based Delta Updates?
 
 When edge nodes have reliable connectivity to a container registry, they can benefit from **registry-based delta transfers**—the registry and container runtime can efficiently transfer only the changed layers between image versions. However, many edge deployments face constraints that make registry-based updates impractical:
@@ -489,6 +498,7 @@ While native bootc delta support is in development, you can experiment with:
 * Edge nodes have reliable, high-bandwidth connectivity to a registry
 * Network policies allow direct registry access
 * Registry infrastructure is available and accessible
+* Image optimization (rechunking) can improve layer reuse efficiency
 
 **Use file-based delta updates when:**
 
