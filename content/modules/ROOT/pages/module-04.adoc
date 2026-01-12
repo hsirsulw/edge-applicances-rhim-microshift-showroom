@@ -175,10 +175,10 @@ This is the atomic foundation — upgrade confidently, rollback instantly.
 
 This demonstrates **update workflows for the real edge**:
 
-✔ No registry  
-✔ No internet  
-✔ No on-site IT  
-✔ Same appliance everywhere
+* No registry
+* No internet
+* No on-site IT
+* Same appliance everywhere
 
 We'll:
 
@@ -324,6 +324,7 @@ sudo bootc status
 ----
 
 You should see:
+
 * **Booted:** 4.20
 * **Rollback target:** 4.19
 
@@ -364,10 +365,10 @@ Expected:
 ====
 Rollback preserves:
 
-✔ `/etc`  
-✔ `/var`  
-✔ Data + config  
-✔ Application workloads  
+- `/etc`  
+- `/var`  
+- Data + config  
+- Application workloads  
 ====
 
 === The Practical Outcome
@@ -394,13 +395,13 @@ Your results should show:
 
 === Validation Checklist
 
-□ Updated to 4.20  
-□ MicroShift upgraded  
-□ Greenboot passed  
-□ Apps survived upgrade  
-□ Rollback target intact  
-□ Rolled back to 4.19  
-□ No onsite intervention needed
+* Updated to 4.20  
+* MicroShift upgraded  
+* Greenboot passed  
+* Apps survived upgrade  
+* Rollback target intact  
+* Rolled back to 4.19  
+* No onsite intervention needed
 
 [#delta_updates]
 == 4.6 Know: Experimental: Delta Updates for Low-Bandwidth

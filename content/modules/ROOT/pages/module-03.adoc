@@ -546,13 +546,13 @@ If any pods are not running, check logs with `oc logs <pod-name> -n wordpress` o
 
 === Validation Checklist
 
-□ VM is running and accessible via SSH  
-□ `bootc status` shows 4.19 image as active  
-□ MicroShift node is in "Ready" state  
-□ WordPress and MySQL pods are running  
-□ Container images are present in `crictl images`  
-□ Kubernetes events show "already present on machine" (not "Successfully pulled")  
-□ Appliance operates without network access
+* VM is running and accessible via SSH  
+* `bootc status` shows 4.19 image as active  
+* MicroShift node is in "Ready" state  
+* WordPress and MySQL pods are running  
+* Container images are present in `crictl images`  
+* Kubernetes events show "already present on machine" (not "Successfully pulled")  
+* Appliance operates without network access
 
 === Exploring the WordPress Manifests (Optional)
 

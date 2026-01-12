@@ -76,46 +76,47 @@ Below are the measurable improvements ManufacturingCo — and customers like the
 
 === Accelerate Time-to-Market
 
-⚙️ **From:** 6–8 weeks per location  
-⚡ **To:** Days  
-📈 **Impact:** 75% faster time-to-value  
+* **From:** 6–8 weeks per location  
+* **To:** Days  
+* **Impact:** 75% faster time-to-value  
 
 Enabled by:  
 Containerfile-based builds · ISO deployment · atomic updates
 
 === Simplify Appliance Creation
 
-⚙️ **From:** Manual multi-step build + bespoke scripts  
-⚡ **To:** Single version-controlled Containerfile  
-📈 **Impact:** 80% reduction in build complexity
+* **From:** Manual multi-step build + bespoke scripts  
+* **To:** Single version-controlled Containerfile  
+* **Impact:** 80% reduction in build complexity
 
 === Streamline Field Operations
 
-⚙️ **From:** 15% update failure rates + site visits  
-⚡ **To:** Automatic rollback + 0-touch recovery  
-📈 **Impact:** 90% reduction in downtime & support cost
+* **From:** 15% update failure rates + site visits  
+* **To:** Automatic rollback + 0-touch recovery  
+* **Impact:** 90% reduction in downtime & support cost
 
 === Enhance Security
 
-⚙️ **From:** Drift, inconsistent patching, unmanaged packages  
-⚡ **To:** Immutable images with embedded security  
-📈 **Impact:** Consistent security posture across fleet
+* **From:** Drift, inconsistent patching, unmanaged packages  
+* **To:** Immutable images with embedded security  
+* **Impact:** Consistent security posture across fleet
 
 === Enable Disconnected Deployments
 
-⚙️ **From:** Registry-dependent updates  
-⚡ **To:** Self-contained images + directory-based upgrades  
-📈 **Impact:** Deploy & upgrade anywhere, online or offline
+* **From:** Registry-dependent updates  
+* **To:** Self-contained images + directory-based upgrades  
+* **Impact:** Deploy & upgrade anywhere, online or offline
 
 === Manage Fleets at Scale
 
-⚙️ **From:** Snowflake systems, configuration sprawl  
-⚡ **To:** Git-like versioning for OS + workloads  
-📈 **Impact:** Predictable rollouts, consistent versions everywhere
+* **From:** Snowflake systems, configuration sprawl  
+* **To:** Git-like versioning for OS + workloads  
+* **Impact:** Predictable rollouts, consistent versions everywhere
 
 === ManufacturingCo’s Before & After
 
 **Before adopting Image Mode**
+
 * 6–8 week rollout cadence  
 * 15% updates failing in the field  
 * 30% drift over 6 months  
@@ -123,6 +124,7 @@ Containerfile-based builds · ISO deployment · atomic updates
 * Security posture inconsistent
 
 **After adopting Image Mode**
+
 * **Deploy + update in days**
 * **<1% update failures**
 * **0% drift — immutable images**
@@ -130,9 +132,12 @@ Containerfile-based builds · ISO deployment · atomic updates
 * **Same known-good image everywhere**
 
 RHEL Image Mode replaced:
-❌ fragile mutable systems  
+
+* Traditional mutable systems  
+
 with  
-✅ predictable, portable, safe, versioned appliances
+
+* predictable, portable, safe, versioned appliances
 
 [#resources]
 == 5.3 Resources & Documentation
