@@ -182,7 +182,7 @@ This lab gives you everything required to **build, publish, deploy, and update**
 
 === Lab Overview: Environment and Components
 
-Just like in the link:https://rhpds.github.io/showroom-lb1054-rhel-image-mode/modules/index.html[LB1054 lab], you will interact with three core systems:
+Just like in the link:https://rhpds.github.io/showroom-lb1054-rhel-image-mode/modules/index.html[LB1054 lab^], you will interact with three core systems:
 
 * **Lab hypervisor (build host)**
 * **Container registry**

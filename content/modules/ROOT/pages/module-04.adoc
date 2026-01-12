@@ -446,7 +446,7 @@ Delta updates are **experimental today**, but highly promising for scaling fleet
 
 === Future Direction
 
-Red Hat is actively working on native delta update support (see link:https://issues.redhat.com/browse/RHELBU-3333[RHELBU-3333]). The goal is to provide:
+Red Hat is actively working on native delta update support (see link:https://issues.redhat.com/browse/RHELBU-3333[RHELBU-3333^]). The goal is to provide:
 
 * Unified tooling that works with standard container formats
 * Integration with bootc workflows

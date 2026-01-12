@@ -250,7 +250,7 @@ MicroShift can now run workloads without a registry.
 * `copy_embedded_images.sh` — loads them into the runtime store at boot
 
 Upstream reference patterns:
-link:https://gitlab.com/fedora/bootc/examples/-/tree/main/physically-bound-images[Fedora examples]
+link:https://gitlab.com/fedora/bootc/examples/-/tree/main/physically-bound-images[Fedora examples^]
 
 . View the `Containerfile` for the 4.19 appliance (embedding step):
 +

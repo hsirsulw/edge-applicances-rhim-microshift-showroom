@@ -2,7 +2,7 @@
 
 Welcome to a hands-on lab focused on building real cloud-native appliances—designed for engineers, architects, consultants, and sales teams who build, sell, position, or operate solutions at the edge.
 
-Our previous lab, link:https://rhpds.github.io/showroom-lb1054-rhel-image-mode/modules/index.html[LB1054 – Unleashing The Power of Image Mode for RHEL], introduced treating the OS as an image.  
+Our previous lab, link:https://rhpds.github.io/showroom-lb1054-rhel-image-mode/modules/index.html[LB1054 – Unleashing The Power of Image Mode for RHEL^], introduced treating the OS as an image.  
 This lab takes the next step: **building a production-grade appliance** that addresses real customer challenges such as disconnected operations, risky updates, inconsistent lifecycle management, and resource-limited deployments.
 
 [#customer_scenario]
@@ -161,8 +161,8 @@ image::use-cases.jpg[use-cases,100%,100%]
 
 [NOTE]
 ====
-Image Mode evolved from link:https://www.redhat.com/en/blog/red-hat-device-edge-rpm-ostree-updates[rpm-ostree], a proven architecture for edge and appliance operations.  
-This lab builds on link:https://rhpds.github.io/showroom-lb1054-rhel-image-mode/modules/index.html[LB1054 – Unleashing The Power of Image Mode for RHEL], extending it to embed MicroShift and applications into the OS image—creating fully self-contained appliances that function even in disconnected environments.
+Image Mode evolved from link:https://www.redhat.com/en/blog/red-hat-device-edge-rpm-ostree-updates[rpm-ostree^], a proven architecture for edge and appliance operations.  
+This lab builds on link:https://rhpds.github.io/showroom-lb1054-rhel-image-mode/modules/index.html[LB1054 – Unleashing The Power of Image Mode for RHEL^], extending it to embed MicroShift and applications into the OS image—creating fully self-contained appliances that function even in disconnected environments.
 ====
 
 [#benefits]
