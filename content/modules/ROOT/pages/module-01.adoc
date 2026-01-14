@@ -102,7 +102,7 @@ As introduced in the xref:index.adoc#solution[workshop overview], RHEL Image Mod
 * Difficult provenance and version tracking
 
 | *Desired State (Image Mode)*
-d
+
 * Immutable, versioned OS image
 * Each system boots from a known-good source
 * Atomic updates with instant rollback
