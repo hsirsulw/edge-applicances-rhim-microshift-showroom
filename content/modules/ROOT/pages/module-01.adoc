@@ -166,16 +166,6 @@ With Image Mode, customers experience:
 | Atomic "A/B" updates: pull a new image and reboot to swap.
 |===
 
-=== The Technical Workflow
-
-A typical workflow looks like this:
-
-. Describe the appliance in a `Containerfile`
-. Build a bootable container image using bootc
-. Generate a bootable ISO/disk image
-. Deploy it to a VM or physical edge device
-. Update by pushing a new tagged image
-
 image::redhat-image-mode.jpg[redhat-image-mode,100%,100%]
 
 [NOTE]
