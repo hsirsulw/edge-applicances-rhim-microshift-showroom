@@ -141,23 +141,31 @@ With Image Mode, customers experience:
 
 === The Business Workflow
 
-[cols="1a,1a", options="header"]
+[cols="1,2a,2a", options="header"]
 |===
-| Traditional Appliance Lifecycle | Image Mode (Technical Workflow)
+| Phase | Traditional Appliance | Image Mode (bootc)
 
-|
-* OS deployed and configured manually
-* Apps installed separately
-* Version control is manual and error-prone
-* Updates are risky and often disruptive
+| *Describe*
+| Manual requirements or complex, scattered install scripts.
+| A single, versioned `Containerfile` defines the entire OS + App.
 
-|
-1. *Describe:* Define appliance in a `Containerfile`
-2. *Build:* Create bootable image using `bootc`
-3. *Generate:* Produce bootable ISO/disk image
-4. *Deploy:* Install to VM or physical edge device
-5. *Update:* Push a new tagged image for atomic upgrade
+| *Build*
+| Building a fresh OS often requires dedicated, complex build servers.
+| Standard container tools (Podman/Docker) build the OS like an app.
+
+| *Generate*
+| Manual ISO creation or conversion tools; hard to automate.
+| `bootc-image-builder` outputs ISO, AMI, or QCOW2 in one step.
+
+| *Deploy*
+| Manual installation, PXE booting, or separate config management.
+| Deploy the same image to VM, Bare Metal, or Edge devices.
+
+| *Update*
+| Incremental (drift-prone) package updates or risky manual patching.
+| Atomic "A/B" updates: pull a new image and reboot to swap.
 |===
+
 === The Technical Workflow
 
 A typical workflow looks like this:
