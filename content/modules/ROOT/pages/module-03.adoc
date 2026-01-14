@@ -412,10 +412,9 @@ If you see **"Successfully pulled"**, the system used the internet. If you see *
 
 === Exploring Application Manifests (Optional)
 To see how MicroShift manages the embedded workloads:
-+
 [source,sh,role=execute]
 ----
-cat /usr/lib/microshift/manifests/wordpress/wordpress.yaml
+cat /usr/lib/microshift/manifests/wordpress.d/wordpress.yaml
 ----
 
 [NOTE]
