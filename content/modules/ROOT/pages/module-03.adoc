@@ -7,62 +7,61 @@
 == Learning objectives
 By the end of this module, you will be able to:
 
-* Create an isolated network for disconnected environment simulation
-* Deploy a bootc image to a virtual machine using KVM
-* Configure kubeconfig for MicroShift access
-* Verify a self-contained appliance is running correctly
-* Confirm embedded container images are being used (not pulled from network)
+* [x] Create an isolated network for disconnected environment simulation
+* [x] Deploy a bootc image to a virtual machine using KVM
+* [x] Configure kubeconfig for MicroShift access
+* [x] Verify a self-contained appliance is running correctly
+* [x] Confirm embedded container images are being used (not pulled from network)
 
 [#know_section]
 [#deploying]
 == 3.1 Know: Deploying to Edge Locations
 
 === The Business Challenge
+ManufacturingCo must deploy appliances to 50 factory locations with varying constraints.
 
-Remember ManufacturingCo? They need to deploy appliances to 50 factory locations across North America. Each location has different constraints:
+[cols="1,2a", options="header"]
+|===
+| Constraint | Impact on Deployment
+| **No Connectivity** | Standard "pull-based" cloud deployments will fail instantly.
+| **Low Bandwidth** | Large image downloads would take days or disrupt factory operations.
+| **Limited On-site IT** | The installation process must be "Zero Touch" and automated.
+|===
 
-* Some locations have no internet connectivity
-* Others have intermittent or low-bandwidth connections
-* Physical access may be limited
-* IT staff may not be available on-site
+**The Solution:** ISO-based deployment provides a single, portable file that contains the entire OS, MicroShift, and application stack.
 
-**The Challenge:** How do we get self-contained appliances to edge locations reliably and consistently, regardless of network connectivity?
+=== ISO-Based Deployment vs. Traditional Methods
 
-=== How ISO-Based Deployment Solves This
-
-ISO-based deployment enables:
-
-* **USB/Physical Media Deployment:** Copy ISO to USB drive, deploy to any location
-* **Network Deployment:** Use PXE boot or network file share for connected locations
-* **Consistent Installation:** Same ISO works identically across all locations
-* **Offline Operation:** Once installed, appliance operates completely offline
-
-This solves the deployment challenge by providing a single, portable file that contains everything needed—no network dependency during or after installation.
-
-=== Why Simulate a Disconnected Environment
-
-In this lab, we'll create an isolated network to simulate a disconnected edge location. This proves that:
-
-* The appliance boots and runs without internet access
-* Embedded container images are used (not pulled from registries)
-* Applications start successfully using only embedded images
-* The appliance operates exactly as it would in a real disconnected factory location
-
-This simulation validates that ManufacturingCo can deploy to any location, regardless of connectivity.
+[cols="1a,1a", options="header"]
+|===
+| ❌ Traditional Network-Dependent | ✅ Image Mode ISO (Disconnected)
+| 
+* Requires internet to pull packages/images.
+* Fragile: Installation fails if network drops.
+* Configuration drift across different sites.
+| 
+* **Self-Contained:** Everything is inside the ISO.
+* **Resilient:** Works via USB or local PXE boot.
+* **Atomic:** Identical installation at every site.
+|===
 
 [#show_section]
 [#boot_vm]
 == 3.2 Show: Deploy the Appliance to Target System
 
-=== Why We're Doing This
+=== The Deployment Workflow
+We are simulating the "Air-Gapped Factory" by creating an isolated virtual network before installing the ISO.
 
-This simulates deploying to an edge location. By creating an isolated network and deploying the ISO to a VM, we're demonstrating how ManufacturingCo would deploy appliances to their factory locations—whether via USB, network share, or PXE boot.
+[cols="^1,2,2", options="header"]
+|===
+| Step | Action | Purpose
+| 1 | **Isolate Network** | Simulate a factory with no internet access.
+| 2 | **Define VM** | Prepare the target hardware (simulated via KVM).
+| 3 | **Automate Install** | Use Kickstart to install the image with zero manual clicks.
+|===
 
-=== Create Isolated Network
-
-First, we'll create an isolated network to simulate a disconnected environment:
-
-. View the Create Network script:
+=== 1. Create Isolated Network
+. View the setup script:
 +
 [source,sh,role=execute]
 ----
@@ -188,14 +187,15 @@ print_info "To use this network in create-vm.sh, set NETNAME='${NETWORK_NAME}'"
 ----
 ====
 
-. Create a new isolated network:
+. Create the network:
 +
 [source,sh,role=execute]
 ----
 sudo bash setup-isolated-network.sh
 ----
 
-=== Create and Boot the VM
+=== 2. Create and Boot the VM
+We use a **Kickstart** file to automate the partitioning and `bootc` installation. This ensures the appliance is ready for production as soon as the first boot completes.
 
 . View the VM creation script:
 +
@@ -302,71 +302,37 @@ rm -f "${SOURCE_KS}"
 ----
 ====
 
-[NOTE]
-====
-This script creates a VM, attaches your self-contained ISO, injects the Kickstart file, and starts the automated installation. Kickstart automates the OS installation so the VM can boot straight into your Image Mode appliance with zero manual clicks.
-====
-
-. Create and start the VM:
+. Execute the deployment:
 +
 [source,sh,role=execute]
 ----
 sudo bash create-vm.sh
 ----
 
-Once the VM begins booting, open a new terminal and connect to the console to watch the installation process, which should take 5-10 minutes to conclude:
-
+. Watch the installation (Optional):
++
 [source,sh,role=execute]
 ----
 sudo virsh console microshift-4.19-bootc-vm1
 ----
 
-You should now see the appliance boot into Image Mode.
+[TIP]
+.Architecture Insight: Kickstart & bootc
+====
+The Kickstart file uses the `ostreecontainer` command to tell the installer to pull the OS directly from the local OCI archive embedded on the ISO, rather than a remote registry.
+====
 
-=== Verify VM is Running
-
-Before proceeding to verification, confirm the VM is running:
-
-. Verify the VM is in running state:
-+
+=== 3. Verify VM Status
 [source,sh,role=execute]
 ----
 sudo virsh list --all | grep microshift-4.19-bootc-vm1
 ----
 
-[IMPORTANT]
-====
-**Expected results:**
-* VM `microshift-4.19-bootc-vm1` should show state as "running"
-* If the VM is not running, check the console output or logs for installation errors
-====
-
-=== How This Solves the Problem
-
-By deploying the ISO to a VM on an isolated network, we've demonstrated that:
-
-* The appliance can be deployed to any location (simulated by the VM)
-* Installation is automated and consistent (via Kickstart)
-* The appliance operates in a disconnected environment (isolated network)
-* This same ISO can be deployed via USB, network share, or PXE boot to ManufacturingCo's factory locations
-
 [#verify_disconnected]
 == 3.3 Show: Verify Disconnected Operation
 
-=== Why We're Doing This
-
-This proves the appliance works without network access. By verifying that container images were "already present on machine" rather than pulled from registries, we confirm that ManufacturingCo's appliances can operate completely offline in their factory locations.
-
-=== Find the VM IP Address and Connect via SSH
-
-Before you can verify the appliance, you need to find its IP address and connect to it.
-
-. From the bastion host, check that the VM is running:
-+
-[source,sh,role=execute]
-----
-sudo virsh list --all
-----
+=== Connectivity & Access
+Now we prove the appliance functions without any external network reach.
 
 . Find the IP address of the VM:
 +
@@ -391,225 +357,70 @@ When prompted, enter the password: `redhat02`
 The default user is `redhat` with password `redhat02`. You should see a message indicating "Boot Status is GREEN - Health Check SUCCESS" when you successfully connect.
 ====
 
-=== Check bootc System Status
-
-. Confirm the system is running the 4.19 deployment:
+. **Check System Health:**
 +
 [source,sh,role=execute]
 ----
 sudo bootc status
 ----
 
-=== Set Up kubeconfig for MicroShift Access
-
-Before you can interact with MicroShift using `oc` commands, you need to configure the kubeconfig file. MicroShift generates a local kubeconfig file that you can use to access the cluster.
-
-. Create the `.kube` directory in your home directory if it doesn't exist:
+. **Configure MicroShift (kubeconfig):**
 +
 [source,sh,role=execute]
 ----
 mkdir -p ~/.kube
-----
-
-. Copy the MicroShift kubeconfig file to your home directory:
-+
-[source,sh,role=execute]
-----
 sudo cat /var/lib/microshift/resources/kubeadmin/kubeconfig > ~/.kube/config
-----
-
-. Set the correct permissions on the kubeconfig file:
-+
-[source,sh,role=execute]
-----
 chmod go-r ~/.kube/config
 ----
 
-[NOTE]
-====
-The kubeconfig file is automatically generated by MicroShift and contains the necessary credentials to access the cluster. For more information about kubeconfig files and remote access, see the link:https://docs.redhat.com/en/documentation/red_hat_build_of_microshift/4.19/html/configuring/microshift-node-access-kubeconfig[Red Hat build of MicroShift documentation^]. For general information about deploying bootc images, see link:https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html-single/using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems/index#deploying-bootc-images_using-image-mode-for-rhel[Deploying bootc images^].
-====
+=== Verification: Proving the "Air-Gap"
+The critical proof of success is verifying that images were **not** pulled from the internet.
 
-=== Verify MicroShift and Applications
-
-. Verify the node is ready:
+. **Verify Application Readiness:**
 +
 [source,sh,role=execute]
 ----
 oc get nodes
-----
-
-. Check that WordPress and MySQL pods are running:
-+
-[source,sh,role=execute]
-----
 oc get pods -A
 ----
 
-=== Verify Embedded Container Images Are Being Used
-
-This is the critical verification that proves the appliance is operating in disconnected mode.
-
-. Ensure the images came from the ISO (not pulled from the network):
-+
-[source,sh,role=execute]
-----
-sudo crictl images
-----
-
-. Verify that Kubernetes events show images were already present (not pulled from network):
+. **The "Smoking Gun" Verification:**
+Check the Kubernetes events. You are looking for the message: **"Container image already present on machine"**.
 +
 [source,sh,role=execute]
 ----
 oc get events -A | grep -i pull
 ----
-+
-You should see events indicating that container images were "already present on machine" for:
 
-* WordPress and MySQL application images
-* MicroShift component images (from the openshift-release-dev registry)
-
-[NOTE]
+[IMPORTANT]
 ====
-This confirms your appliance is fully **air-gapped** and relying on the embedded images you packaged inside the ISO. The Kubernetes events show "already present on machine" rather than "Successfully pulled", which indicates the images were loaded from the embedded storage during MicroShift startup, not pulled from external registries.
+If you see **"Successfully pulled"**, the system used the internet. If you see **"already present"**, you have successfully validated a disconnected, image-mode appliance!
 ====
-
-=== How This Solves the Problem
-
-By verifying that images were "already present on machine", we've proven that:
-
-* The appliance operates completely offline—no registry access required
-* Embedded images are working correctly—all applications use embedded images
-* The disconnected operations challenge is solved—ManufacturingCo can deploy to any location regardless of connectivity
-* The appliance matches exactly what was validated—deterministic behavior
-
-This verification confirms that ManufacturingCo's factory locations can operate their appliances without any network dependency.
 
 [#validation]
 == 3.4 Validation: Appliance Operating Successfully
 
-=== Comprehensive Verification
+=== Expected Results Checklist
+[cols="1,2", options="header"]
+|===
+| Test | Expected Result
+| **Boot Status** | `bootc status` shows 4.19 active.
+| **Node State** | `Ready` state in `oc get nodes`.
+| **App Status** | WordPress and MySQL pods are `Running`.
+| **Offline Proof** | `crictl images` shows all images; Events show `already present`.
+|===
 
-Verify all components are functioning correctly:
-
-. Confirm bootc status shows 4.19:
-+
+=== Exploring Application Manifests (Optional)
+To see how MicroShift manages the embedded workloads:
 [source,sh,role=execute]
 ----
-sudo bootc status
+ls /usr/lib/microshift/manifests.d/wordpress
 ----
-
-. Verify MicroShift node is ready:
-+
-[source,sh,role=execute]
-----
-oc get nodes
-----
-
-. Check that application pods are running:
-+
-[source,sh,role=execute]
-----
-oc get pods -A -o wide
-----
-
-. Verify embedded images are present (not pulled from network):
-+
-[source,sh,role=execute]
-----
-sudo crictl images | grep -E "wordpress|mysql"
-----
-
-. Verify Kubernetes events confirm images were already present:
-+
-[source,sh,role=execute]
-----
-oc get events -A | grep -i pull
-----
-+
-Look for events showing "already present on machine" for application and MicroShift component images.
-
-=== Expected Results
-
-[IMPORTANT]
-====
-**Expected results:**
-
-* `bootc status` should show the 4.19 image as active
-* Node should be in "Ready" state
-* WordPress and MySQL pods should be running in the `wordpress` namespace
-* Container images (`wordpress:6.2.1-apache` and `mysql:8.0`) should be present in `crictl images` output
-* Kubernetes events should show "already present on machine" for all images, confirming they were loaded from embedded storage, not pulled from external registries
-
-If any pods are not running, check logs with `oc logs <pod-name> -n wordpress` or review MicroShift logs with `sudo journalctl -u microshift`.
-====
-
-=== Validation Checklist
-
-* VM is running and accessible via SSH  
-* `bootc status` shows 4.19 image as active  
-* MicroShift node is in "Ready" state  
-* WordPress and MySQL pods are running  
-* Container images are present in `crictl images`  
-* Kubernetes events show "already present on machine" (not "Successfully pulled")  
-* Appliance operates without network access
-
-=== Exploring the WordPress Manifests (Optional)
-
-To understand how the application is deployed, you can explore the manifests:
-
-. View the Kustomization file:
-+
-[source,sh,role=execute]
-----
-cat /usr/lib/microshift/manifests/wordpress/kustomization.yaml
-----
-+
-[%collapsible]
-====
-[source,yaml]
-----
-resources:
-  - wordpress.yaml
-  - mysql.yaml
-namespace: wordpress
-----
-====
-
-. Inspect the WordPress deployment:
-+
-[source,sh,role=execute]
-----
-cat /usr/lib/microshift/manifests/wordpress/wordpress.yaml
-----
-+
-[%collapsible]
-====
-[source,yaml]
-----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: wordpress
-spec:
-  replicas: 1
-  template:
-    spec:
-      containers:
-        - name: wordpress
-          image: docker.io/library/wordpress:6.2.1-apache
-          ports:
-            - containerPort: 80
-          env:
-            - name: WORDPRESS_DB_HOST
-              value: mysql
-----
-====
 
 [NOTE]
 ====
-MicroShift runs this container using the **embedded image**, not pulling from Docker Hub.
+Note the image reference `docker.io/library/wordpress:6.2.1-apache`. Even though it looks like a remote URL, MicroShift is redirected to the **internal local storage** created during the image build.
 ====
 
 ---
-
+**Next:** Proceed to xref:module-04.adoc[Module 4: Safe Updates & Rollbacks]

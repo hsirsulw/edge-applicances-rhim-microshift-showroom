@@ -7,94 +7,67 @@
 == Learning objectives
 By the end of this module, you will be able to:
 
-* Explain the A/B boot model and atomic update process
-* Build an updated appliance image (4.20)
-* Perform an update using disconnected workflows
-* Export and import images using directory transport
-* Verify successful updates using greenboot
-* Perform manual rollbacks and validate recovery
-* Understand automatic rollback and failure protection
+* [x] Explain the A/B boot model and atomic update process
+* [x] Build an updated appliance image (4.20)
+* [x] Perform an update using disconnected workflows
+* [x] Export and import images using directory transport
+* [x] Verify successful updates using greenboot
+* [x] Perform manual rollbacks and validate recovery
+* [x] Understand automatic rollback and failure protection
 
 [#know_section]
 [#atomic_updates]
 == 4.1 Know: Solving Risky Updates with Atomic Operations
 
 === The Business Challenge
+ManufacturingCo struggles with updates in the field. Traditional methods often fail, leading to costly downtime.
 
-ManufacturingCo struggles with updates:
+[cols="1,2a", options="header"]
+|===
+| Challenge | Impact on ManufacturingCo
+| **Update Failures** | 15% of updates fail and require onsite IT.
+| **Downtime** | 2–4 hours of downtime per failure.
+| **Debugging** | Field debugging is difficult and unpredictable due to network issues.
+|===
 
-* 15% updates fail and require onsite IT
-* 2–4 hours of downtime per failure
-* Debugging in the field is difficult
-* Network issues make updates unpredictable
-
-**The Real Issue:**  
-Traditional package-based updates mutate a live system. If something breaks, you’re stuck diagnosing on a production appliance — often in a remote factory.
+**The Real Issue:** Traditional package-based updates mutate a live system. If something breaks, you are stuck diagnosing a corrupted production appliance.
 
 === Atomic Updates: The New Model
 
-image::updates.jpg[updates-workflow,100%,100%]
 
-RHEL Image Mode replaces package updates with **atomic image deployment**.
 
-Each system maintains two bootable states:
+RHEL Image Mode replaces package updates with **atomic image deployment**. Each system maintains two bootable states:
 
-* **A — Active (current boot)**
-* **B — Next boot candidate**
+[cols="1,1,2a", options="header"]
+|===
+| State | Name | Description
+| **A** | **Active** | The current boot version (e.g., 4.19).
+| **B** | **Next Candidate** | The staged version (4.20) waiting for a reboot.
+| **Safety** | **Rollback** | If anything fails, the system auto-reverts to A.
+|===
 
-When you update:
-
-1. A new OS image is pulled/staged
-2. Nothing changes until reboot
-3. At reboot the new image becomes active
-4. If anything fails → auto rollback to A
-
-**Business Value**
-
-* Safe updates — no partial installs
-* Instant rollback — recovery in **seconds**
-* No onsite IT — greenboot handles failure
-* Confidence to update more frequently
-
-=== Why This Matters
-
-**Traditional approach**
-
-* Risky in-place mutation
-* 15% failures + site visits
-* Manual recovery steps
-
-**Image Mode approach**
-
-* Immutable, versioned upgrade
-
-* <1% failure rate
-* Automatic rollback
-* Zero downtime risk
-
-For ManufacturingCo, this eliminates onsite IT trips and turns updates from drama into routine.
+**Business Value Comparison**
+[cols="1a,1a", options="header"]
+|===
+| ❌ Traditional Approach | ✅ Image Mode Approach
+| 
+* Risky in-place mutation.
+* 15% failure rate + site visits.
+* Manual recovery steps.
+| 
+* Immutable, versioned upgrade.
+* <1% failure rate + auto-rollback.
+* Zero downtime risk with instant recovery.
+|===
 
 [#show_section]
 [#build_4.20]
 == 4.2 Show: Build the Updated Image (4.20)
 
 === Why We're Doing This
-
-To demonstrate **real update workflow**:
-
-* Build a new appliance release (4.20)
-* Stage it as the next boot image
-* Prepare to roll forward — or back — instantly
-
-In the real world, new versions might include:
-
-* Security fixes
-* Updated MicroShift payload
-* New container workloads
-* Configuration changes
+To demonstrate a **real update workflow**, we build version 4.20. In production, this would include security fixes, MicroShift payloads, or new app workloads.
 
 === View the Updated Containerfile
-
 . Inspect the `Containerfile.4.20`:
 +
 [source,sh,role=execute]
@@ -136,7 +109,6 @@ PULL
 ====
 
 === Build the 4.20 Image
-
 . Run the 4.20 build:
 +
 [source,sh,role=execute]
@@ -146,329 +118,119 @@ time sudo bash -x build.sh 4.20 2>&1 | tee build-4.20.log
 
 [NOTE]
 ====
-Every new image is just another tag — making OS updates feel like container deployments.
+**Image Size Reality Check**: Layering 4.20 on 4.19 increases size. In production, you may build **fresh images** instead. Both models work with `bootc switch`.
 ====
-
-[NOTE]
-====
-**Image Size Reality Check**:
-
-Layering 4.20 on 4.19 increases size.  
-In production, you may build **fresh images** instead.
-Both models work with `bootc switch`.
-====
-
-=== How This Solves the Problem
-
-We now have:
-
-* **Two appliance versions**
-
-* Known-good 4.19 running live
-* New 4.20 ready to deploy safely
-
-This is the atomic foundation — upgrade confidently, rollback instantly.
 
 [#upgrade]
 == 4.3 Show: Deploy Update Using Disconnected Workflow
 
 === Why We're Doing This
+We are simulating the **real edge**: no registry, no internet, and no onsite IT.
 
-This demonstrates **update workflows for the real edge**:
+[cols="^1,2,2", options="header"]
+|===
+| Step | Action | Command
+| 1 | **Export** | `skopeo copy ... dir:`
+| 2 | **Pack** | `tar -cvf`
+| 3 | **Transfer** | `scp`
+| 4 | **Switch** | `bootc switch --transport dir`
+|===
 
-* No registry
-* No internet
-* No on-site IT
-* Same appliance everywhere
-
-We'll:
-
-1. Export the image as a directory
-2. Transfer it offline
-3. Use bootc to switch safely
-4. Reboot into the new version
-
-=== Export the 4.20 Image
-
-. Make an export directory:
-+
-[source,sh,role=execute]
-----
-mkdir -p /var/tmp/microshift-bootc-4.20
-----
-
+=== Export and Transfer the 4.20 Image
 . Export using `skopeo`:
 +
 [source,sh,role=execute]
 ----
+mkdir -p /var/tmp/microshift-bootc-4.20
 sudo skopeo copy containers-storage:localhost/microshift-bootc-embeeded:4.20 dir:/var/tmp/microshift-bootc-4.20
 ----
 
-. Pack (tar) the directory:
+. Pack and Check Size (~11GB):
 +
 [source,sh,role=execute]
 ----
-cd /var/tmp/; time tar cvf microshift-bootc-4.20.tar microshift-bootc-4.20/
-----
-
-. Check size (~11GB):
-+
-[source,sh,role=execute]
-----
+cd /var/tmp/
+time tar cvf microshift-bootc-4.20.tar microshift-bootc-4.20/
 du -sh /var/tmp/microshift-bootc-4.20.tar
 ----
 
-=== Transfer to the Edge Node
-
-. Copy directory to appliance:
+. Copy to Appliance:
 +
 [source,sh,role=execute]
 ----
 scp /var/tmp/microshift-bootc-4.20.tar redhat@<VM_IP_ADDRESS>:/var/tmp
 ----
 
-[NOTE]
-====
-In real deployments: USB sticks, courier delivery, portable SSDs — all valid.
-====
-
-=== Switch to the New Image
-
-. SSH to the VM:
+=== Switch and Activate on the Edge Node
+. SSH and Unpack:
 +
 [source,sh,role=execute]
 ----
 ssh redhat@<VM_IP_ADDRESS>
+cd /var/tmp/ && time tar -xvf microshift-bootc-4.20.tar
 ----
 
-. Check the current image:
-+
-[source,sh,role=execute]
-----
-sudo bootc status
-----
-
-. Unpack (un-tar) the directory:
-+
-[source,sh,role=execute]
-----
-cd /var/tmp/; time tar -xvf microshift-bootc-4.20.tar
-----
-
-. Switch to the locally transferred 4.20:
+. Perform the Switch and Reboot:
 +
 [source,sh,role=execute]
 ----
 sudo bootc switch --transport dir /var/tmp/microshift-bootc-4.20/
-----
-
-. Confirm it staged:
-+
-[source,sh,role=execute]
-----
 sudo bootc status
-sudo rpm-ostree status
-----
-
-=== Activate the Update
-
-. Apply and reboot:
-+
-[source,sh,role=execute]
-----
 sudo bootc upgrade --apply
 ----
 
-Reconnect after boot completes.
-
 === Verify Success
-
-. Check the active deployment:
-+
 [source,sh,role=execute]
 ----
 sudo bootc status
-----
-. Check MicroShift:
-+
-[source,sh,role=execute]
-----
 microshift version
-oc get pods -A
-----
-
-. Check greenboot:
-+
-[source,sh,role=execute]
-----
 systemctl status greenboot-healthcheck.service
-journalctl -u greenboot-healthcheck.service
 ----
-
-=== Why This Solves the Problem
-
-You just proved:
-
-* Updates work **without a registry**
-* Failure detection is automatic
-* Staging and activation are safe
-* Recovery requires no IT staff
 
 [#rollback]
 == 4.4 Show: Demonstrate Rollback Capability
 
 === Why Rollback Matters
+Rollback provides an instant safety net with zero data loss and no need for field remediation.
 
-This is the real magic of atomic updates.
-
-Rollback gives:
-
-* Instant safety net
-* Zero data loss
-* Zero downtime risk
-* No field remediation
-
-=== Check Rollback Availability
-
-. See active + rollback deployments:
+. **Check Availability & Perform Rollback**:
 +
 [source,sh,role=execute]
 ----
-sudo bootc status
-----
-
-You should see:
-
-* **Booted:** 4.20
-* **Rollback target:** 4.19
-
-=== Perform the Rollback
-
-. Stage rollback:
-+
-[source,sh,role=execute]
-----
+sudo bootc status   # Should show 4.20 (booted) and 4.19 (rollback)
 sudo bootc rollback
-----
-
-. Reboot:
-+
-[source,sh,role=execute]
-----
 sudo systemctl reboot
 ----
 
-=== Verify Rollback
-
-. Verify booted image:
+. **Verify Reversion**:
 +
 [source,sh,role=execute]
 ----
-sudo bootc status
+sudo bootc status   # 4.19 should now be booted
 microshift version
-oc get pods -A
 ----
-
-Expected:
-
-* Booted image = 4.19
-* MicroShift back to 4.19
-* Workloads still running
 
 [IMPORTANT]
 ====
-Rollback preserves:
-
-- `/etc`  
-- `/var`  
-- Data + config  
-- Application workloads  
+Rollback preserves `/etc`, `/var`, and application data. Only the core OS is reverted.
 ====
-
-=== The Practical Outcome
-
-ManufacturingCo can:
-
-* Deploy updates at scale
-* Trust automatic rollback
-* Avoid onsite technicians
-* Recover from failure in under a minute
 
 [#validation]
 == 4.5 Validation: Update and Rollback Verified
-
-=== Validate Success
-
-Your results should show:
-
-* 4.20 deployed successfully
-* Greenboot reports healthy
-* Pods continued running
-* Rollback target present
-* Successful rollback to 4.19
-
-=== Validation Checklist
-
-* Updated to 4.20  
-* MicroShift upgraded  
-* Greenboot passed  
-* Apps survived upgrade  
-* Rollback target intact  
-* Rolled back to 4.19  
-* No onsite intervention needed
+* [ ] 4.20 deployed successfully
+* [ ] Greenboot reports healthy
+* [ ] Pods continued running
+* [ ] Rolled back to 4.19 without onsite intervention
 
 [#delta_updates]
 == 4.6 Know: Experimental: Delta Updates for Low-Bandwidth
-
-=== Why This Exists
-
-Disconnected edge sites often face:
-
-* Limited bandwidth
-* Expensive connections
-* No registry access
-
-Full image transfers = multiple GB  
-Delta updates = <500MB  
-Same update — drastically smaller file.
-
-=== When to Use
-
-Use **full images** when:
-
-* USB or local transfer is easy
-* Bandwidth is not the bottleneck
-
-Use **delta updates** when:
-
-* Remote sites use cellular/satellite
-* Network transfers are expensive or slow
-* Bandwidth limits prevent GB moves
-* Sites need regular patch cadence
+Disconnected sites often have limited bandwidth. **Delta updates** reduce GB-sized moves down to <500MB by only transferring what changed.
 
 [NOTE]
 ====
-Delta updates are **experimental today**, but highly promising for scaling fleets.
+Delta updates are **experimental today** (see link:https://issues.redhat.com/browse/RHELBU-3333[RHELBU-3333^]).
 ====
 
-=== How It Works
-
-* Create delta in a development environment
-* Transfer delta file
-* Rebuild the new image on the appliance
-* Apply with `bootc switch`
-
-=== Future Direction
-
-Red Hat is actively working on native delta update support (see link:https://issues.redhat.com/browse/RHELBU-3333[RHELBU-3333^]). The goal is to provide:
-
-* Unified tooling that works with standard container formats
-* Integration with bootc workflows
-* Support for air-gapped and low-bandwidth scenarios
-* Alignment with industry standards (Flatpak OCI delta spec)
-
-When available, delta updates will become a first-class feature for edge appliance management.
-
 ---
+**Next:** Proceed to xref:module-05.adoc[Module 5: Business Outcomes & Resources]
 
-**Next:** Proceed to xref:module-05.adoc[Module 5: Business Outcomes & Resources] and connect what you built to customer value.

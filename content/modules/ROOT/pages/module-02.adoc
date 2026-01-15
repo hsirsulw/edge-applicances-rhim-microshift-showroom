@@ -7,78 +7,58 @@
 == Learning objectives
 By the end of this module, you will be able to:
 
-* Read and explain a bootc Containerfile
-* Understand why EUS (Extended Update Support) matters for long-lived appliances
-* Explain why repo metadata (`redhat.repo`) must be embedded
-* Define physically-bound images and why they matter for edge
-* Explain why embedded images live under `/usr` instead of `/var`
-* Build a MicroShift-enabled base image
-* Build a self-contained appliance with embedded workloads
-* Generate a bootable ISO using `bootc-image-builder`
+* [x] Read and explain a bootc Containerfile
+* [x] Understand why EUS (Extended Update Support) matters for long-lived appliances
+* [x] Explain why repo metadata (`redhat.repo`) must be embedded
+* [x] Define physically-bound images and why they matter for edge
+* [x] Explain why embedded images live under `/usr` instead of `/var`
+* [x] Build a MicroShift-enabled base image
+* [x] Build a self-contained appliance with embedded workloads
+* [x] Generate a bootable ISO using `bootc-image-builder`
 
 [#know_section]
 [#containerfile]
 == 2.1 Know: Building Self-Contained Appliances
 
 === The Business Challenge
-
 ManufacturingCo needs to deploy the same appliance to 50 factory sites — including locations with **intermittent or no network**.
 
-Traditional methods require:
-
-* Pulling application images at runtime
-* Constant registry access
-* Manual package installs and config steps
-* Multi-stage deployment
-
-These steps do not scale to remote, offline, or bandwidth-constrained environments.
-
-**Challenge:** How do we deploy appliances that work everywhere — **even when the network is gone?**
-
-=== Why We Need Self-Contained Appliances
-
-Self-contained appliances embed **everything required to boot and run workloads**, including:
-
-* RHEL Image Mode base
-* MicroShift
-* Application container images
-* Quadlets/manifests
-
-This provides:
-
-* **True offline operation** — no registry dependency
-* **Deterministic deployments** — every image identical
-* **Single artifact delivery** — USB/ISO deploys the full system
-* **Repeatability** — tested image = deployed image
-
-This eliminates runtime dependencies and solves disconnected operations.
+[cols="1,2a", options="header"]
+|===
+| Traditional Method Pain Points | Image Mode Solution
+| Pulling application images at runtime | **Physically-bound images:** Apps are inside the OS.
+| Constant registry access required | **True offline operation:** No registry dependency.
+| Manual package installs and config steps | **Deterministic deployments:** Every image is identical.
+| Multi-stage deployment complexity | **Single artifact delivery:** One ISO deploys the full system.
+|===
 
 === How Containerfiles Solve This Problem
+The `Containerfile` is the **Source of Truth** for the entire appliance. It transitions the workflow from fragile manual steps to a predictable automated pipeline.
 
-A `Containerfile` becomes the **source of truth** for the appliance.
+[cols="1a,1a", options="header"]
+|===
+| ❌ Legacy Workflow | ✅ Containerfile Workflow
+| **Build → Install → Configure** | **Define → Build → Ship → Deploy**
+| Multi-step, manual, and prone to "drift" between sites. | Entire stack is unified in one version-controlled file.
+|===
 
-It defines:
 
-* Base OS
-* MicroShift and required packages
-* System configuration (firewall, security)
-* Quadlets/manifests
-* Embedding logic for application images
 
-Instead of multi-step “build → install → configure”, we now:
-**define → build → ship → deploy**  
-— all inside one version-controlled file.
+**What the Containerfile Defines:**
+
+* **Base OS:** The specific RHEL version (EUS).
+* **MicroShift:** The core orchestration and required packages.
+* **System Config:** Hardened firewall and security settings.
+* **Workloads:** Quadlets, manifests, and the logic to embed application images.
 
 === Why We Use EUS (Extended Update Support)
+EUS is chosen because edge deployments value stability over speed:
 
-EUS is chosen because edge deployments value:
+* **Lifecycle Sync:** Hardened compatibility within the Red Hat Device Edge link:https://docs.redhat.com/en/documentation/red_hat_device_edge/4/html/overview/device-edge-overview#device-edge-compatibility_device-edge-overview[matrix^].
+* **Extended Support:** Up to 48 months of stability when paired with link:https://access.redhat.com/support/policy/updates/openshift#eust3[OpenShift/MicroShift EUS Term 3^].
+* **Security without Friction:** Critical patches without minor version jumps.
 
-* Lifecycle sync and Hardened device-edge compatibility (Ensures stability within the Red Hat Device Edge validated link:https://docs.redhat.com/en/documentation/red_hat_device_edge/4/html/overview/device-edge-overview#device-edge-compatibility_device-edge-overview[matrix^]).
-* Extended support up to 48 months (When paired with link:https://access.redhat.com/support/policy/updates/openshift#eust3[OpenShift/MicroShift EUS Term 3^]).
-* Security fixes without minor version jumps (Critical for air-gapped or bandwidth-constrained edge nodes).
-
-For industrial systems, stability beats speed — making EUS the natural choice.
-
+=== View the Base Containerfile
 
 . View the base Containerfile:
 +
@@ -103,7 +83,6 @@ RUN dnf install -y --releasever="${VERSION_ID}" firewalld jq microshift microshi
     dnf clean all
 
 # Create a default 'redhat' user with the specified password.
-# Add it to the 'wheel' group to allow for running sudo commands.
 ARG USER_PASSWD
 RUN if [ -z "${USER_PASSWD}" ] ; then \
         echo USER_PASSWD is a mandatory build argument && exit 1 ; \
@@ -117,14 +96,14 @@ RUN firewall-offline-cmd --zone=public --add-port=22/tcp && \
     firewall-offline-cmd --zone=trusted --add-source=10.42.0.0/16 && \
     firewall-offline-cmd --zone=trusted --add-source=169.254.169.1 && \
     firewall-offline-cmd --zone=trusted --add-source=fd01::/48
-    # Application-specific firewall configuration
+
+# Application-specific firewall configuration
 RUN firewall-offline-cmd --zone=public --add-port=80/tcp && \
     firewall-offline-cmd --zone=public --add-port=443/tcp && \
     firewall-offline-cmd --zone=public --add-port=30000-32767/tcp && \
     firewall-offline-cmd --zone=public --add-port=30000-32767/udp
 
-# Create a systemd unit to recursively make the root filesystem subtree
-# shared as required by OVN images
+# Systemd unit to ensure root filesystem is shared (required by OVN)
 RUN cat > /etc/systemd/system/microshift-make-rshared.service <<'EOF'
 [Unit]
 Description=Make root filesystem shared
@@ -138,7 +117,6 @@ WantedBy=multi-user.target
 EOF
 
 RUN systemctl enable microshift-make-rshared.service
-
 COPY wordpress /usr/lib/microshift/manifests.d/wordpress
 
 ## Apply kernel tuning for CIS hardening compliance
@@ -169,91 +147,48 @@ RUN oscap-im --profile xccdf_org.ssgproject.content_profile_cis /usr/share/xml/s
 You do **not** need to modify `Containerfile.base` in this lab — it is provided so you understand what goes into your base appliance.
 ====
 
-[NOTE]
-====
-**Layered vs Fresh Images:**  
-This workshop uses **layered builds** (base → 4.19 → 4.20) to accelerate development.  
-However, **bootc switch** works fine with fresh, independent images built directly from the OS base.
-
-Fresh builds avoid accumulating unused layers over time — a pattern preferred for long-term production appliances.
-====
-
 [#physically_bound]
 == 2.2 Know: Physically-Bound Images for Disconnected Operations
 
-=== The Disconnected Reality
+=== Why `/usr` — Not `/var`?
+[cols="1,2a", options="header"]
+|===
+| Directory | Strategy in Image Mode
+| `/usr` | **Immutable:** Versioned with the OS. Apps here upgrade/rollback with the kernel.
+| `/var` | **Mutable:** Runtime storage. Data here persists across OS updates.
+|===
 
-Many edge environments cannot:
 
-* Pull container images  
-* Access registries  
-* Receive OTA updates reliably
-
-Yet, workloads still need to start instantly.
-
-**Solution:** Put everything in the OS image from day one.
-
-=== Physically-Bound Images
-
-A **physically-bound image** bundles:
-
-* OS + MicroShift
-* Application workloads
-* Quadlets/manifests
-* Supporting assets
-
-This gives:
-
-* Appliances that boot and run offline
-* Strict version alignment between OS + apps
-* Deployment by **copying a single file** (ISO or disk image)
-* Guaranteed consistency across every factory
-
-=== Why `/usr` — Not `/var`
-
-Image Mode treats:
-
-* `/usr` → **immutable** and versioned with the OS
-* `/var` → **mutable**, runtime storage
-
-Embedding workloads under `/usr/lib/...` ensures:
-
-* Apps upgrade and roll back **with the OS**
-* No drift between OS and application payloads
-* No risk of runtime mutation breaking state
-
-Putting them in `/var` would defeat the purpose of immutability.
 
 === How Physical Embedding Works
 
-**Build time** — use `skopeo` to copy into `/usr/lib/...`:
+The goal of physical embedding is to ensure MicroShift can run workloads without a registry.
+
+* **Build time:** Use `skopeo` to copy container images into the immutable `/usr/lib` directory.
+* **Runtime:** Import these images into the Podman/CRI-O store automatically during boot.
+
+**Helper Scripts Provided:**
+
+* `embed_image.sh`: Pulls specified container images and their digests into the OS image during the build process.
 
 [source,bash]
 ----
-RUN skopeo copy --preserve-digests docker://image \
-    dir:/usr/lib/containers-image-cache/app
+RUN skopeo copy --preserve-digests docker://${image} \
+    dir:/usr/lib/containers/storage/${sha}
 ----
 
-**Runtime** — import into the podman store automatically:
+* `copy_embedded_images.sh`: Triggered at boot, this script populates the runtime container store from the immutable `/usr/lib` cache, making images "already present" for MicroShift.
 
 [source,bash]
 ----
 /usr/bin/skopeo copy --preserve-digests \
-  dir:/usr/lib/containers-image-cache/app \
-  containers-storage:registry/image@sha256:<digest>
+  dir:/usr/lib/containers/storage/${sha} \
+  containers-storage:${image}
 ----
 
-MicroShift can now run workloads without a registry.
+Upstream reference patterns: link:https://gitlab.com/fedora/bootc/examples/-/tree/main/physically-bound-images[Fedora examples^].
 
-=== Helper Scripts Provided
-
-* `embed_image.sh` — pulls container images into `/usr/lib`
-* `copy_embedded_images.sh` — loads them into the runtime store at boot
-
-Upstream reference patterns:
-link:https://gitlab.com/fedora/bootc/examples/-/tree/main/physically-bound-images[Fedora examples^]
-
-. View the `Containerfile` for the 4.19 appliance (embedding step):
+. View the `Containerfile` for the 4.19 appliance:
 +
 [source,sh,role=execute]
 ----
@@ -277,24 +212,19 @@ ENV IMAGE_LIST_FILE=${IMAGE_STORAGE_DIR}/image-list.txt
 COPY ./embed_image.sh /usr/bin/
 COPY ./copy_embedded_images.sh /usr/bin/
 
-# Pull the container images into /usr/lib/containers/storage:
-# - Each image goes into a separate sub-directory
-# - Sub-directories are named after the image reference string SHA
-# - An image list file maps image references to their name SHA
-# First for MicroShift payload
+# Pull images into /usr/lib/containers/storage
 RUN --mount=type=secret,id=pullsecret,dst=/run/secrets/pull-secret.json \
     images="$(jq -r ".images[]" /usr/share/microshift/release/release-"$(uname -m)".json)" ; \
     mkdir -p "${IMAGE_STORAGE_DIR}" ; \
     for img in ${images} ; do \
        /usr/bin/embed_image.sh ${img} --authfile /run/secrets/pull-secret.json ; \
      done 
-# Then for Applications
+
+# Embed Applications
 RUN --mount=type=secret,id=pullsecret,dst=/run/secrets/pull-secret.json <<PULL
     /usr/bin/embed_image.sh docker.io/library/wordpress:6.2.1-apache
     /usr/bin/embed_image.sh docker.io/library/mysql:8.0
 PULL
-
-# 
 
 RUN mkdir -p /etc/systemd/system/microshift.service.d
 RUN cat > /etc/systemd/system/microshift.service.d/microshift-copy-images.conf <<EOF
@@ -305,18 +235,10 @@ EOF
 ====
 
 [#show_section]
-[#build_base]
 == 2.3 Show: Build the Base Image
+Building this consistent foundation solves **configuration drift**. 
 
-=== Why We're Doing This
-
-We're building the foundation that solves the **configuration drift challenge**. The base image provides a consistent, known-good starting point that includes MicroShift and system configuration. This ensures every appliance built from this base will have identical components, eliminating the "it works on my machine" problem.
-
-=== Build the Base Image
-
-Now you'll run the build script that creates the base image. We suggest you **inspect** (cat) the script first, then run the build so you understand what it does.
-
-. (Optional) View the build script for the base image:
+. (Optional) View the build script:
 +
 [source,sh,role=execute]
 ----
@@ -338,11 +260,6 @@ dnf config-manager \
 dnf config-manager --set-disabled rhocp-4.18-for-rhel-9-$(uname -m)-rpms --set-disabled rhocp-4.20-for-rhel-9-$(uname -m)-rpms
 cp /etc/yum.repos.d/redhat.repo /home/lab-user/bootc-embeeded-containers
 
-# Run podman build as root to allow for :z relabeling
-#
-# Mount the host subscription data
-#
-# In this lab there is no need for --authfile / pullsecret as we are pulling from a disconnected unsecure registry
 sudo podman build -t ${IMAGE_NAME} \
     --build-arg USER_PASSWD=${USER_PASSWD} \
     --volume /etc/rhsm:/etc/rhsm:ro,z \
@@ -359,27 +276,9 @@ sudo podman build -t ${IMAGE_NAME} \
 time sudo bash -x build-base.sh 2>&1 | tee build-base.log
 ----
 
-=== How This Solves the Problem
-
-By building a consistent base image, we're creating the foundation for solving configuration drift. Every appliance built from this base will have:
-
-* Identical MicroShift components
-* Consistent system configuration
-* Same firewall rules and security settings
-* Predictable behavior across all deployments
-
-This base image becomes the starting point for all appliance variants, ensuring consistency across ManufacturingCo's 50 factory locations.
-
 [#build_appliance]
 == 2.4 Show: Build the Self-Contained Appliance (4.19)
-
-=== Why We're Doing This
-
-This embeds applications directly into the OS image, solving the **disconnected operations challenge**. By embedding WordPress, MySQL, and MicroShift payload images, we create a truly self-contained appliance that can run completely offline—no runtime registry pulls required.
-
-=== Build the 4.19 Appliance Image
-
-Now you'll build the self-contained appliance that embeds all container images. This is where we solve the disconnected operations challenge.
+We now embed WordPress and MySQL to solve the **disconnected operations challenge**.
 
 . (Optional) View the build script:
 +
@@ -395,157 +294,56 @@ cat build.sh
 ----
 #!/bin/bash
 set -e
-
-REGISTRY_URL=quay.io
 TAG=$1
-
-if [ -z "$TAG" ]; then
-    echo "Error: a tag must be provided."
-    echo "Usage: $0 <tag>"
-    exit 1
-fi
-
-# Set IMAGE_NAME and BASE_IMAGE_NAME based on TAG (case-insensitive)
 TAG_LOWER=$(echo "$TAG" | tr '[:upper:]' '[:lower:]')
-case "$TAG_LOWER" in
-    4.19)
-        IMAGE_NAME=microshift-bootc-embeeded
-        BASE_IMAGE_NAME=microshift-bootc:base
-        ;;
-    4.20)
-        IMAGE_NAME=microshift-bootc-embeeded
-        BASE_IMAGE_NAME=microshift-bootc:4.19
-        ;;
-    *)
-        echo "Error: TAG must be either 4.19 or 4.20"
-        exit 1
-        ;;
-esac
+IMAGE_NAME=microshift-bootc-embeeded
+BASE_IMAGE_NAME=microshift-bootc:base
 
-#REGISTRY_IMG="rhn_support_arolivei/${IMAGE_NAME}"
-
-# For 4.20, configure dnf repositories
-if [ "$TAG_LOWER" = "4.20" ]; then
-    echo "#### Configuring dnf repositories for 4.20"
-    sudo dnf config-manager \
-        --set-enabled rhocp-4.20-for-rhel-9-$(uname -m)-rpms \
-        --set-enabled fast-datapath-for-rhel-9-$(uname -m)-rpms
-    sudo dnf config-manager \
-        --set-disabled rhocp-4.18-for-rhel-9-$(uname -m)-rpms \
-        --set-disabled rhocp-4.19-for-rhel-9-$(uname -m)-rpms
-    cp /etc/yum.repos.d/redhat.repo /home/lab-user/bootc-embeeded-containers
-fi
-
-echo "#### Building a new bootc image with MicroShift and application Container images embeeded to it"
 sudo podman build -t "${IMAGE_NAME}:${TAG}" \
     --volume /etc/rhsm:/etc/rhsm:ro,z \
     --volume /etc/pki/entitlement:/etc/pki/entitlement:ro,z \
-    --volume /etc/containers/registries.d/registry-5000.yaml:/etc/containers/registries.d/registry-5000.yaml:ro,z \
     --volume /etc/yum.repos.d:/etc/yum.repos.d:ro,z \
-    --volume /etc/containers/registries.conf.d/99-mirrors.conf:/etc/containers/registries.conf.d/99-mirrors.conf:ro,z \
-    --volume /etc/containers/policy.json:/etc/containers/policy.json:ro,z \
     --build-arg USHIFT_BASE_IMAGE_NAME="${BASE_IMAGE_NAME}" \
     --build-arg USHIFT_BASE_IMAGE_TAG=${TAG} \
     -f Containerfile.${TAG}
 
-#echo "#### pushing bootc image to a registry"
-#podman push "localhost/${IMAGE_NAME}:${TAG}" "${REGISTRY_URL}/${REGISTRY_IMG}:${TAG}"
-
-# Only create ISO for 4.19
 if [ "$TAG_LOWER" = "4.19" ]; then
     sudo mkdir -p /var/tmp/bootc-images
-    echo "#### creating ISO from bootc image"
     sudo podman run --rm -it --privileged --security-opt label=type:unconfined_t \
        -v /var/lib/containers/storage:/var/lib/containers/storage \
        -v /var/tmp/bootc-images:/output \
        --volume /etc/rhsm:/etc/rhsm:ro \
        --volume /etc/pki/entitlement:/etc/pki/entitlement:ro \
-       --volume /etc/containers/registries.d/registry-5000.yaml:/etc/containers/registries.d/registry-5000.yaml:ro \
         registry.redhat.io/rhel9/bootc-image-builder:latest \
         --progress=verbose --local --type iso localhost/${IMAGE_NAME}:${TAG}
-
     cp -v /var/tmp/bootc-images/bootiso/install.iso microshift-bootc-embeeded-4.19.iso
 fi
 ----
 ====
 
-. Build the 4.19 appliance image (~10–15 minutes):
+. Build the 4.19 appliance (~10–15 minutes):
 +
 [source,sh,role=execute]
 ----
 time sudo bash -x build.sh 4.19 2>&1 | tee build-4.19.log
 ----
 
-When the build completes, the ISO will appear in `/var/tmp/bootc-images/bootiso/` or `_build/`.
-
-=== How This Solves the Problem
-
-By embedding all container images into the OS image, we've created a truly self-contained appliance that:
-
-* **Operates completely offline:** No network access required after deployment
-* **Eliminates runtime registry dependency:** All images are already present in the ISO
-* **Ensures deterministic behavior:** Every appliance matches exactly what was validated
-* **Simplifies deployment:** Single ISO file contains everything needed
-
-This solves the disconnected operations challenge for ManufacturingCo's factory locations, enabling deployment to any location regardless of network connectivity.
-
 [#validation]
-== 2.5 Validation: Appliance Ready for Deployment
+== 2.5 Validation: Success Criteria
 
-=== Verify Build Success
+[cols="1,3", options="header"]
+|===
+| Component | Expected Status
+| **Base Image** | `microshift-bootc:base` exists in podman.
+| **Appliance Image** | `microshift-bootc-embeeded:4.19` exists in podman.
+| **Bootable ISO** | `microshift-bootc-embeeded-4.19.iso` is created and >5GB.
+|===
 
-Before proceeding, verify that both images were built successfully and the ISO is ready for deployment:
-
-. Check that the base image exists:
-+
 [source,sh,role=execute]
 ----
 sudo podman images | grep microshift-bootc
+ls -lh microshift-bootc-embeeded-4.19.iso
 ----
-
-. Verify the 4.19 appliance image exists:
-+
-[source,sh,role=execute]
-----
-sudo podman images | grep microshift-bootc-embeeded
-----
-
-. Confirm the ISO file was created:
-+
-[source,sh,role=execute]
-----
-ls -lh /var/tmp/bootc-images/bootiso/*.iso || ls -lh _build/*.iso
-----
-
-=== Expected Results
-
-[IMPORTANT]
-====
-**Expected results:**
-
-* Base image `localhost/microshift-bootc:base` should be present
-* Appliance image `localhost/microshift-bootc-embeeded:4.19` should be present
-* ISO file `microshift-bootc-embeeded-4.19.iso` should exist in `/var/tmp/bootc-images/bootiso/` or `_build/`
-* ISO file size will likely be several GB (it contains embedded container images)
-====
-
-=== Validation Checklist
-
-* Base image `microshift-bootc:base` exists  
-* Appliance image `microshift-bootc-embeeded:4.19` exists  
-* ISO file exists and is several GB in size  
-* Build logs show no errors
-
-=== What Happens Next
-
-Once installed on the target VM:
-
-* Embedded images are available *before* MicroShift starts
-* The systemd ExecStartPre runs `copy_embedded_images.sh` to populate the container store
-* MicroShift launches workloads immediately — no external registry needed
-
-This pattern ensures predictable, repeatable, and offline-friendly deployments—solving the disconnected operations challenge.
 
 ---
-
-**Next:** Proceed to xref:module-03.adoc[Module 3: Deploying to Edge Locations] to deploy this self-contained appliance and verify it operates without network access.
+**Next:** Proceed to xref:module-03.adoc[Module 3: Deploying to Edge Locations].

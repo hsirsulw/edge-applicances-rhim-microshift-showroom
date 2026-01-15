@@ -8,136 +8,44 @@
 [#recap]
 == 5.1 Know: Connecting the Dots — Problem → Capability → Outcome
 
-Throughout this workshop, we walked through the **real-world problems** ManufacturingCo faces and demonstrated how **RHEL Image Mode + MicroShift** solve them end to end.
+Throughout this workshop, we demonstrated how **RHEL Image Mode + MicroShift** solve ManufacturingCo's real-world problems end-to-end.
 
-Below is a summary of each module’s role in that journey.
+=== Workshop Journey Summary
 
-=== Module 1: Understanding Edge Challenges
-
-**Customer Pain:**  
-Edge appliances drift out of compliance, updates break systems, and environments are hard to manage due to constraints (network, physical, organizational).
-
-**Solution Introduced:**  
-RHEL Image Mode treats the **entire OS as an immutable image** — not a mutable package stack.
-
-**Outcome for the Business:**  
-Participants understood *why* managing traditional edge systems is hard and *how* image-based operations unlock consistency and repeatability.
-
-=== Module 2: Building Self-Contained Appliances
-
-**Customer Pain:**  
-Disconnected or intermittent networks make traditional updates impractical or impossible.
-
-**Solution Introduced:**  
-Build **physically-bound bootable images** that embed MicroShift + workload containers.
-
-**Outcome for the Business:**  
-Participants built an appliance that brings everything it needs with it — perfect for air-gapped factories.
-
-=== Module 3: Deploying to Edge Locations
-
-**Customer Pain:**  
-“How do we reliably deploy appliances to dozens or hundreds of remote sites?”
-
-**Solution Introduced:**  
-ISO-based deployment onto isolated networks — proving the runtime consumes **only** embedded images.
-
-**Outcome for the Business:**  
-Participants confirmed the appliance **runs fully offline**, solving the deployment-to-anywhere challenge.
-
-=== Module 4: Safe Updates & Rollbacks
-
-**Customer Pain:**  
-Update failures require on-site IT visits with hours of downtime.
-
-**Solution Introduced:**  
-**Atomic A/B updates + instant rollback + greenboot verification.**
-
-**Outcome for the Business:**  
-Participants performed a safe update, validated system health, and rolled back instantly — eliminating field risk.
-
-=== The Complete Picture
-
-Across the modules, we solved core edge challenges:
-
-* **Configuration Drift →** Immutable images, reproducible builds  
-* **Risky Updates →** Atomic updates + automatic rollback  
-* **Disconnected Operations →** Embedded images + offline ISO deployment  
-* **Limited On-Site Skills →** Zero-touch installation and recovery  
-* **Scale & Lifecycle Complexity →** Container-style workflows and versioning
-
-The takeaway:  
-**Image Mode and MicroShift transform edge operations from “pets to cattle,” enabling predictable, repeatable, fleet-centric management.**
+[cols="1,2,2", options="header"]
+|===
+| Module | Capability Demonstrated | Business Outcome
+| **1. Challenges** | RHEL Image Mode Architecture | Shift from mutable packages to **immutable images**.
+| **2. Building** | Physically-bound bootable images | Appliances that are **fully self-contained** for air-gapped sites.
+| **3. Deploying** | ISO-based offline deployment | Reliable, **reproducible installation** without registry access.
+| **4. Updating** | Atomic A/B updates & Greenboot | Safe updates with **instant rollback**, eliminating field risk.
+|===
 
 [#quantified_outcomes]
 == 5.2 Know: Quantified Business Outcomes
 
-Below are the measurable improvements ManufacturingCo — and customers like them — can realize.
+The transition to Image Mode transforms edge operations from "pets" to "cattle." Below are the measurable improvements realized by ManufacturingCo.
 
-=== Accelerate Time-to-Market
+=== Operational Efficiency Matrix
 
-* **From:** 6–8 weeks per location  
-* **To:** Days  
-* **Impact:** 75% faster time-to-value  
+[cols="1,1a,1a,1", options="header"]
+|===
+| Metric | Traditional Method | Image Mode Method | Impact
+| **Deployment Speed** | 6–8 weeks per location | Days | **75% Faster**
+| **Build Complexity** | Manual, bespoke scripts | Versioned `Containerfile` | **80% Simpler**
+| **Update Stability** | 15% failure rate | <1% failure rate | **90% Less Risk**
+| **System Drift** | 30% drift over 6 months | **0% Drift** (Immutable) | **100% Consistent**
+|===
 
-Enabled by:  
-Containerfile-based builds · ISO deployment · atomic updates
 
-=== Simplify Appliance Creation
 
-* **From:** Manual multi-step build + bespoke scripts  
-* **To:** Single version-controlled Containerfile  
-* **Impact:** 80% reduction in build complexity
+=== Strategic Advantages
 
-=== Streamline Field Operations
+* **Enhanced Security:** Immutable images provide a consistent, tamper-resistant security posture across the entire fleet.
+* **Disconnected Success:** Directory-based upgrades enable high-tech operations in locations with zero internet connectivity.
+* **Fleet Management:** Use Git-like versioning for both the OS and workloads, enabling predictable, fleet-wide rollouts.
 
-* **From:** 15% update failure rates + site visits  
-* **To:** Automatic rollback + 0-touch recovery  
-* **Impact:** 90% reduction in downtime & support cost
-
-=== Enhance Security
-
-* **From:** Drift, inconsistent patching, unmanaged packages  
-* **To:** Immutable images with embedded security  
-* **Impact:** Consistent security posture across fleet
-
-=== Enable Disconnected Deployments
-
-* **From:** Registry-dependent updates  
-* **To:** Self-contained images + directory-based upgrades  
-* **Impact:** Deploy & upgrade anywhere, online or offline
-
-=== Manage Fleets at Scale
-
-* **From:** Snowflake systems, configuration sprawl  
-* **To:** Git-like versioning for OS + workloads  
-* **Impact:** Predictable rollouts, consistent versions everywhere
-
-=== ManufacturingCo’s Before & After
-
-**Before adopting Image Mode**
-
-* 6–8 week rollout cadence  
-* 15% updates failing in the field  
-* 30% drift over 6 months  
-* On-site IT required to recover  
-* Security posture inconsistent
-
-**After adopting Image Mode**
-
-* **Deploy + update in days**
-* **<1% update failures**
-* **0% drift — immutable images**
-* **Instant rollback — seconds, not hours**
-* **Same known-good image everywhere**
-
-RHEL Image Mode replaced:
-
-* Traditional mutable systems  
-
-with  
-
-* predictable, portable, safe, versioned appliances
+---
 
 [#resources]
 == 5.3 Resources & Documentation
@@ -145,43 +53,41 @@ with
 This section provides a comprehensive list of all Red Hat documentation and resources referenced throughout this workshop.
 
 === RHEL Image Mode (bootc) Documentation
-
-  * link:https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html-single/using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems/index[Using Image Mode for RHEL^]
-  * link:https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html-single/using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems/index#building-and-testing-the-rhel-bootable-container-images_using-image-mode-for-rhel-to-build-deploy-and-manage-operating-systems[Building bootc images^]
-  * link:https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html-single/using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems/index#deploying-the-rhel-bootc-images_using-image-mode-for-rhel-to-build-deploy-and-manage-operating-systems[Deploying bootc images^]
-  * link:https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html-single/using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems/index#managing-rhel-bootc-images[Managing bootc updates^]
+* link:https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html-single/using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems/index[Using Image Mode for RHEL^]
+* link:https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html-single/using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems/index#building-and-testing-the-rhel-bootable-container-images_using-image-mode-for-rhel-to-build-deploy-and-manage-operating-systems[Building bootc images^]
+* link:https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html-single/using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems/index#deploying-the-rhel-bootc-images_using-image-mode-for-rhel-to-build-deploy-and-manage-operating-systems[Deploying bootc images^]
+* link:https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html-single/using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems/index#managing-rhel-bootc-images[Managing bootc updates^]
 
 === Red Hat build of MicroShift Documentation
-
-  * link:https://docs.redhat.com/en/documentation/red_hat_build_of_microshift/4.19/html/installing_with_image_mode_for_rhel/installing-a-bootc-image-and-publishing-to-a-registry#microshift-install-bootc-build-image_microshift-install-bootc-image[Building a bootc image with MicroShift^]
-  * link:https://docs.redhat.com/en/documentation/red_hat_build_of_microshift/4.19/html/configuring/microshift-node-access-kubeconfig[MicroShift node access and kubeconfig^]
-  * link:https://docs.redhat.com/en/documentation/red_hat_build_of_microshift/4.19[Red Hat build of MicroShift 4.19 Documentation^]
-  * link:https://docs.redhat.com/en/documentation/red_hat_build_of_microshift/4.20[Red Hat build of MicroShift 4.20 Documentation^]
+* link:https://docs.redhat.com/en/documentation/red_hat_build_of_microshift/4.19/html/installing_with_image_mode_for_rhel/installing-a-bootc-image-and-publishing-to-a-registry#microshift-install-bootc-build-image_microshift-install-bootc-image[Building a bootc image with MicroShift^]
+* link:https://docs.redhat.com/en/documentation/red_hat_build_of_microshift/4.19/html/configuring/microshift-node-access-kubeconfig[MicroShift node access and kubeconfig^]
+* link:https://docs.redhat.com/en/documentation/red_hat_build_of_microshift/4.19[Red Hat build of MicroShift 4.19 Documentation^]
+* link:https://docs.redhat.com/en/documentation/red_hat_build_of_microshift/4.20[Red Hat build of MicroShift 4.20 Documentation^]
 
 === Related Training and Resources
-
-  * link:https://rhpds.github.io/showroom-lb1054-rhel-image-mode/modules/index.html[LB1054 Lab^]
-  * link:https://www.redhat.com/en/technologies/linux-platforms/enterprise-linux/edge[Red Hat Enterprise Linux for Edge^]
-  * link:https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html/building_and_managing_edge_devices_with_rhel_for_edge/index[Building and managing edge devices with RHEL for Edge^]
-  * link:https://www.redhat.com/en/topics/edge-computing/microshift[Red Hat build of MicroShift^]
-  * link:https://www.redhat.com/en/technologies/cloud-computing/openshift/edge-computing[Red Hat OpenShift for Edge Computing^]
-  * link:https://www.redhat.com/en/blog/red-hat-device-edge-rpm-ostree-updates[rpm-ostree updates for Red Hat Device Edge^]
+* link:https://rhpds.github.io/showroom-lb1054-rhel-image-mode/modules/index.html[LB1054 Lab^]
+* link:https://www.redhat.com/en/technologies/linux-platforms/enterprise-linux/edge[Red Hat Enterprise Linux for Edge^]
+* link:https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html/building_and_managing_edge_devices_with_rhel_for_edge/index[Building and managing edge devices with RHEL for Edge^]
+* link:https://www.redhat.com/en/topics/edge-computing/microshift[Red Hat build of MicroShift^]
+* link:https://www.redhat.com/en/technologies/cloud-computing/openshift/edge-computing[Red Hat OpenShift for Edge Computing^]
+* link:https://www.redhat.com/en/blog/red-hat-device-edge-rpm-ostree-updates[rpm-ostree updates for Red Hat Device Edge^]
 
 === Additional Resources
-
 * **Delta Updates (Experimental)**: 
     * link:https://github.com/containers/tar-diff[tar-diff on GitHub^]
     * link:https://github.com/arthur-r-oliveira/bootc-embeeded-containers/blob/rhpds/delta-updates-experimental.md[github.com/arthur-r-oliveira/bootc-embeeded-containers^]
 
+---
+
 [#qa]
 == 5.4 Q&A — Your Turn
 
-Thank you for participating in this hands-on lab.
+**Thank you for participating in this hands-on lab.**
 
-You now have:
+You have successfully validated:
+[checklist]
+* [x] A reproducible **Build → Deploy → Update → Rollback** workflow.
+* [x] A working model for **image-based edge operations**.
+* [x] Confidence that updates are safe—even in **disconnected environments**.
 
-* A reproducible build → deploy → update → rollback workflow  
-* A working mental model for image-based edge operations  
-* Confidence that updates are safe — even in disconnected environments
-
-🎤 We’ll now open the floor for your questions, discussion, and feedback!
+🎤 **We’ll now open the floor for your questions, discussion, and feedback!**
