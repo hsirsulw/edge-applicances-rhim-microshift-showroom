@@ -215,6 +215,16 @@ microshift version
 Rollback preserves `/etc`, `/var`, and application data. Only the core OS is reverted.
 ====
 
+[IMPORTANT]
+====
+**MicroShift Rollback Considerations:**
+
+This demonstration shows the **bootc rollback capability** for the OS layer. However, **MicroShift data and state are not automatically restored** when performing a bootc rollback. This is a **design decision**, not a known issue.
+
+* **Restore data for older version:** If you need to restore MicroShift workloads, data, or configuration after an OS rollback, you can restore data for the older MicroShift version using MicroShift backup and restore procedures. See link:https://docs.redhat.com/en/documentation/red_hat_build_of_microshift/4.20/html/backup_and_restore/backing-up-and-restoring-data#microshift-restoring-data-backups-manually_microshift-backup-and-restore[Red Hat build of MicroShift 4.20 Backup and Restore documentation^] for details.
+* **Downgrade limitations:** Downgrades other than automatic rollbacks are not supported. See link:https://docs.redhat.com/en/documentation/red_hat_build_of_microshift/4.20/html-single/updating/index#microshift-updates-rpm-ostree_microshift-update-rpms-ostree[Red Hat build of MicroShift 4.20 Updating documentation^] for details.
+====
+
 [#validation]
 == 4.5 Validation: Update and Rollback Verified
 * [ ] 4.20 deployed successfully
