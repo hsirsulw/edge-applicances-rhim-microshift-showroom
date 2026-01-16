@@ -80,7 +80,7 @@ cat Containerfile.4.20
 .Output of `$cat Containerfile.4.20`
 [source,dockerfile]
 ----
-FROM localhost/microshift-bootc-embeeded:4.19
+FROM localhost/microshift-bootc-embedded:4.19
 COPY ./embed_image.sh /usr/bin/
 ## Needed as bootc-image-builder requires a repo file to be present in the base image.
 # in the build.sh with TAG=4.20, we replace the 4.19 repo with the 4.20 repo to allow upgrade MicroShift to 4.20. 
@@ -142,7 +142,7 @@ We are simulating the **real edge**: no registry, no internet, and no onsite IT.
 [source,sh,role=execute]
 ----
 mkdir -p /var/tmp/microshift-bootc-4.20
-sudo skopeo copy containers-storage:localhost/microshift-bootc-embeeded:4.20 dir:/var/tmp/microshift-bootc-4.20
+sudo skopeo copy containers-storage:localhost/microshift-bootc-embedded:4.20 dir:/var/tmp/microshift-bootc-4.20
 ----
 
 . Pack and Check Size (~11GB):

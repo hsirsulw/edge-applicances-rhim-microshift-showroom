@@ -258,7 +258,7 @@ dnf config-manager \
         --set-enabled rhocp-4.19-for-rhel-9-$(uname -m)-rpms \
         --set-enabled fast-datapath-for-rhel-9-$(uname -m)-rpms
 dnf config-manager --set-disabled rhocp-4.18-for-rhel-9-$(uname -m)-rpms --set-disabled rhocp-4.20-for-rhel-9-$(uname -m)-rpms
-cp /etc/yum.repos.d/redhat.repo /home/lab-user/bootc-embeeded-containers
+cp /etc/yum.repos.d/redhat.repo /home/lab-user/bootc-embedded-containers
 
 sudo podman build -t ${IMAGE_NAME} \
     --build-arg USER_PASSWD=${USER_PASSWD} \
@@ -296,7 +296,7 @@ cat build.sh
 set -e
 TAG=$1
 TAG_LOWER=$(echo "$TAG" | tr '[:upper:]' '[:lower:]')
-IMAGE_NAME=microshift-bootc-embeeded
+IMAGE_NAME=microshift-bootc-embedded
 BASE_IMAGE_NAME=microshift-bootc:base
 
 sudo podman build -t "${IMAGE_NAME}:${TAG}" \
@@ -316,7 +316,7 @@ if [ "$TAG_LOWER" = "4.19" ]; then
        --volume /etc/pki/entitlement:/etc/pki/entitlement:ro \
         registry.redhat.io/rhel9/bootc-image-builder:latest \
         --progress=verbose --local --type iso localhost/${IMAGE_NAME}:${TAG}
-    cp -v /var/tmp/bootc-images/bootiso/install.iso microshift-bootc-embeeded-4.19.iso
+    cp -v /var/tmp/bootc-images/bootiso/install.iso microshift-bootc-embedded-4.19.iso
 fi
 ----
 ====
@@ -335,14 +335,14 @@ time sudo bash -x build.sh 4.19 2>&1 | tee build-4.19.log
 |===
 | Component | Expected Status
 | **Base Image** | `microshift-bootc:base` exists in podman.
-| **Appliance Image** | `microshift-bootc-embeeded:4.19` exists in podman.
-| **Bootable ISO** | `microshift-bootc-embeeded-4.19.iso` is created and >5GB.
+| **Appliance Image** | `microshift-bootc-embedded:4.19` exists in podman.
+| **Bootable ISO** | `microshift-bootc-embedded-4.19.iso` is created and >5GB.
 |===
 
 [source,sh,role=execute]
 ----
 sudo podman images | grep microshift-bootc
-ls -lh microshift-bootc-embeeded-4.19.iso
+ls -lh microshift-bootc-embedded-4.19.iso
 ----
 
 ---

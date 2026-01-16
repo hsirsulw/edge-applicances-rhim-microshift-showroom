@@ -156,7 +156,7 @@ All lab content has been pre-staged in your working directory.
 
 [source,sh,role=execute]
 ----
-cd ~/bootc-embeeded-containers
+cd ~/bootc-embedded-containers
 ls -la
 ----
 
@@ -181,7 +181,7 @@ ls -la
 pwd
 ----
 +
-Expected: `/home/lab-user/bootc-embeeded-containers`
+Expected: `/home/lab-user/bootc-embedded-containers`
 
 . **Confirm Toolset:**
 +
