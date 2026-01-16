@@ -1,4 +1,4 @@
-= Module 5: Business Outcomes & Resources
+= Module 5: Business outcomes & resources
 :page-nav-title: Business Outcomes
 :icons: font
 :source-highlighter: rouge

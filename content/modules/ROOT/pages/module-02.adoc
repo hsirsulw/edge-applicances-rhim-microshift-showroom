@@ -1,4 +1,4 @@
-= Module 2: Building Self-Contained Appliances
+= Module 2: Building self-contained appliances
 :page-nav-title: Build the Self-Contained Appliance
 :icons: font
 :source-highlighter: rouge

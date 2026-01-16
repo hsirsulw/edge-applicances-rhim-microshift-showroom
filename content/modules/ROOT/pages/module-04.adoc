@@ -1,4 +1,4 @@
-= Module 4: Safe Updates & Rollbacks
+= Module 4: Safe updates & rollbacks
 :page-nav-title: Performing an Atomic Update
 :icons: font
 :source-highlighter: rouge

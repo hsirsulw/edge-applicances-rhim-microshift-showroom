@@ -1,4 +1,4 @@
-= Module 1: Foundation – Understanding Edge Challenges and Preparing the Lab
+= Module 1: Foundation – Understanding edge challenges and preparing the lab
 :page-nav-title: Edge Foundation
 :icons: font
 :source-highlighter: rouge
@@ -135,7 +135,7 @@ RHEL Image Mode **treats the OS like a container image** using `bootc`. Instead 
 
 
 
-image::redhat-image-mode.jpg[redhat-image-mode,100%,100%]
+image::redhat-image-mode.jpg[RHEL Image Mode architecture diagram,100%,100%]
 
 [NOTE]
 ====

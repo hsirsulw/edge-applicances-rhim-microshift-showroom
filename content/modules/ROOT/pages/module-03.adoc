@@ -1,4 +1,4 @@
-= Module 3: Deploying to Edge Locations
+= Module 3: Deploying to edge locations
 :page-nav-title: Deploy & Verify Appliance
 :icons: font
 :source-highlighter: rouge

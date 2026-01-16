@@ -1,4 +1,4 @@
-= Building Self-Contained Edge Appliances with RHEL Image Mode & MicroShift
+= Building self-contained edge appliances with RHEL Image Mode & MicroShift
 
 Welcome to a hands-on lab focused on building real cloud-native appliances—designed for engineers, architects, consultants, and sales teams who build, sell, position, or operate solutions at the edge.
 
