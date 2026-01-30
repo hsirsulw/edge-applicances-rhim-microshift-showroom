@@ -309,13 +309,6 @@ rm -f "${SOURCE_KS}"
 sudo bash create-vm.sh
 ----
 
-. Watch the installation (Optional):
-+
-[source,sh,role=execute]
-----
-sudo virsh console microshift-4.19-bootc-vm1
-----
-
 [TIP]
 .Architecture Insight: Kickstart & bootc
 ====
