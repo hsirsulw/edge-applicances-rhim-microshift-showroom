@@ -357,6 +357,13 @@ The default user is `redhat` with password `redhat02`. You should see a message 
 sudo bootc status
 ----
 
+. **Check Microshift service status:**
++
+[source,sh,role=execute]
+----
+sudo systemctl status microshift
+----
+
 . **Configure MicroShift (kubeconfig):**
 +
 [source,sh,role=execute]
