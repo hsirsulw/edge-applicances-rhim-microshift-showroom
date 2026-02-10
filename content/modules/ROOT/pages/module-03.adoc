@@ -259,7 +259,7 @@ Now we prove the appliance functions without any external network reach.
 watch sudo virsh domifaddr microshift-workshop
 ----
 +
-The output will show the IP address assigned to the VM. Note the IP address (for example, `192.168.100.165`).
+The output will show the IP address assigned to the VM. Note the IP address (for example, `192.168.100.X`).
 
 . Once we see the ip assigned to the VM. CTRL+C exit the watch.
 
